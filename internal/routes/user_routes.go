@@ -7,19 +7,17 @@ import (
 )
 
 type UserRoutes struct {
-	router      *gin.Engine
 	userHandler *handler.UserHandler
 }
 
-func NewUserRoutes(router *gin.Engine, userHandler *handler.UserHandler) *UserRoutes {
+func NewUserRoutes(userHandler *handler.UserHandler) *UserRoutes {
 	return &UserRoutes{
-		router:      router,
 		userHandler: userHandler,
 	}
 }
 
-func (r *UserRoutes) Register() {
-	userGroup := r.router.Group("/users")
+func (r *UserRoutes) Register(rg *gin.RouterGroup) {
+	userGroup := rg.Group("/users")
 	{
 		userGroup.GET("/:id", r.userHandler.GetUser)
 		userGroup.POST("/", r.userHandler.CreateUser)

@@ -1,7 +1,7 @@
-@host = http://localhost:8086
+@host = http://localhost:8086/api/v1
 
 ###
-GET {{host}}/users/1772531637718666442
+GET {{host}}/users/1772532052310301823
 Content-Type: application/json
 
 

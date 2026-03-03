@@ -28,8 +28,8 @@ func main() {
 	userHandler := handler.NewUserHandler(userService)
 
 	// 4️⃣ Register routes
-	userRoutes := routes.NewUserRoutes(r, userHandler)
-	userRoutes.Register()
+	userRoutes := routes.NewUserRoutes(userHandler)
+	routes.RegisterRoutes(r, userRoutes)
 
 	// 5️⃣ Start server using config port
 	log.Println("Server running on port:", cfg.Port)
