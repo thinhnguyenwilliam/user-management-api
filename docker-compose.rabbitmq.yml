@@ -1,0 +1,26 @@
+# docker compose -f docker-compose.rabbitmq.yml up -d
+# http://192.168.1.8:15672
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    hostname: rabbitmq
+    restart: unless-stopped
+    ports:
+      - "5672:5672"     # AMQP port (app connect here)
+      - "15672:15672"   # Management UI
+    networks:
+      - backend-network
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin123
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+volumes:
+  rabbitmq_data:
+
+networks:
+  backend-network:
+    external: true

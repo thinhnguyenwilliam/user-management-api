@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/gin-gonic/gin"
+	"github.com/rabbitmq/amqp091-go"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/cache"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/config"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/handler"
@@ -20,6 +21,7 @@ func main() {
 		log.Fatal("cannot load config:", err)
 	}
 
+	//
 	rdb, err := cache.NewRedisClient(cfg.Redis)
 	if err != nil {
 		log.Fatal("cannot connect to redis:", err)
@@ -28,6 +30,14 @@ func main() {
 	_ = rdb // inject vào service sau
 	log.Println("Redis Addr:", cfg.Redis.Addr)
 	log.Println("Redis Pass:", cfg.Redis.Password)
+
+	//
+	conn, err := amqp091.Dial(cfg.RabbitMQ.URL)
+	if err != nil {
+		log.Fatal("cannot connect to rabbitmq:", err)
+	}
+	defer conn.Close()
+	log.Println("Connected to RabbitMQ")
 
 	// 2️⃣ Create Gin engine
 	gin.SetMode(gin.ReleaseMode)

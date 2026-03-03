@@ -8,10 +8,11 @@ import (
 )
 
 type Config struct {
-	Port        string      `mapstructure:"PORT"`
-	DatabaseURL string      `mapstructure:"DATABASE_URL"`
-	JWTSecret   string      `mapstructure:"JWT_SECRET"`
-	Redis       RedisConfig `mapstructure:",squash"`
+	Port        string         `mapstructure:"PORT"`
+	DatabaseURL string         `mapstructure:"DATABASE_URL"`
+	JWTSecret   string         `mapstructure:"JWT_SECRET"`
+	Redis       RedisConfig    `mapstructure:",squash"`
+	RabbitMQ    RabbitMQConfig `mapstructure:",squash"`
 }
 
 func LoadConfig() (*Config, error) {
