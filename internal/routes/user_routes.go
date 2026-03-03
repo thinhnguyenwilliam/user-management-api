@@ -22,5 +22,6 @@ func (r *UserRoutes) Register() {
 	userGroup := r.router.Group("/users")
 	{
 		userGroup.GET("/:id", r.userHandler.GetUser)
+		userGroup.POST("/", r.userHandler.CreateUser)
 	}
 }

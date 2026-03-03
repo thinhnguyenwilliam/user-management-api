@@ -1,7 +1,7 @@
 @host = http://localhost:8086
 
 ###
-GET {{host}}/users/1
+GET {{host}}/users/1772531637718666442
 Content-Type: application/json
 
 
