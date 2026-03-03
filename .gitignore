@@ -1,0 +1,33 @@
+# ===== Go build =====
+bin/
+tmp/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# ===== Go test =====
+*.test
+*.out
+coverage.out
+
+# ===== Air =====
+tmp/
+
+# ===== Env files =====
+.env
+.env.local
+.env.*.local
+
+# ===== Logs =====
+*.log
+
+# ===== IDE =====
+.vscode/
+.idea/
+*.swp
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
