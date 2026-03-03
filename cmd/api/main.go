@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/gin-gonic/gin"
+	"github.com/thinhnguyenwilliam/user-management-api/internal/cache"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/config"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/handler"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/repository"
@@ -19,8 +20,20 @@ func main() {
 		log.Fatal("cannot load config:", err)
 	}
 
+	rdb, err := cache.NewRedisClient(cfg.Redis)
+	if err != nil {
+		log.Fatal("cannot connect to redis:", err)
+	}
+
+	_ = rdb // inject vào service sau
+	log.Println("Redis Addr:", cfg.Redis.Addr)
+	log.Println("Redis Pass:", cfg.Redis.Password)
+
 	// 2️⃣ Create Gin engine
-	r := gin.Default()
+	gin.SetMode(gin.ReleaseMode)
+	r := gin.New()
+	r.Use(gin.Recovery())
+	r.SetTrustedProxies(nil)
 
 	// 3️⃣ Dependency Injection
 	userRepo := repository.NewUserRepository()

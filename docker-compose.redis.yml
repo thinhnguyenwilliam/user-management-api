@@ -1,0 +1,42 @@
+# user-management-api/docker-compose.redis.yml
+# docker network create backend-network
+# docker compose -f docker-compose.redis.yml up -d
+# docker compose -f docker-compose.redis.yml down
+
+# docker logs redis_cache
+# http://192.168.1.8:5540
+# redis://:secret@redis:6379/0  or   redis://:secret@localhost:6379/0
+
+services:
+  redis:
+    image: redis:7
+    container_name: redis_cache
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    env_file:
+      - .env
+    networks:
+      - backend-network
+    volumes:
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
+      - redis_data:/data
+    command: >
+      redis-server /usr/local/etc/redis/redis.conf
+      --requirepass ${REDIS_PASSWORD}
+
+  redis-ui:
+    image: redis/redisinsight:latest
+    container_name: redis_ui
+    restart: unless-stopped
+    ports:
+      - "5540:5540"
+    networks:
+      - backend-network
+
+volumes:
+  redis_data:
+
+networks:
+  backend-network:
+    external: true

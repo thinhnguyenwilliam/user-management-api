@@ -11,6 +11,7 @@ type Route interface {
 }
 
 func RegisterRoutes(r *gin.Engine, routes ...Route) {
+
 	api := r.Group("/api/v1")
 	api.Use(middleware.Logger()) // chỉ apply cho api v1
 

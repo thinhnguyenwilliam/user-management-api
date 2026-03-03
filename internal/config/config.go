@@ -8,19 +8,16 @@ import (
 )
 
 type Config struct {
-	Port        string `mapstructure:"PORT"`
-	DatabaseURL string `mapstructure:"DATABASE_URL"`
-	JWTSecret   string `mapstructure:"JWT_SECRET"`
+	Port        string      `mapstructure:"PORT"`
+	DatabaseURL string      `mapstructure:"DATABASE_URL"`
+	JWTSecret   string      `mapstructure:"JWT_SECRET"`
+	Redis       RedisConfig `mapstructure:",squash"`
 }
 
 func LoadConfig() (*Config, error) {
 	viper.SetConfigFile(".env")
 	viper.SetConfigType("env")
 	viper.AutomaticEnv()
-
-	// default values
-	viper.SetDefault("PORT", "8080")
-	viper.SetDefault("JWT_SECRET", "secret")
 
 	if err := viper.ReadInConfig(); err != nil {
 		log.Println("No .env file found, using system env")
