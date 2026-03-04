@@ -9,11 +9,6 @@ import (
 	"github.com/thinhnguyenwilliam/user-management-api/internal/models"
 )
 
-type UserRepository interface {
-	GetByID(ctx context.Context, id int64) (*models.User, error)
-	Create(ctx context.Context, user *models.User) error
-}
-
 type InMemoryUserRepository struct {
 	mu    sync.RWMutex
 	users map[int64]*models.User

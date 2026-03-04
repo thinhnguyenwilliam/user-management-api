@@ -10,16 +10,11 @@ import (
 	"github.com/thinhnguyenwilliam/user-management-api/internal/repository"
 )
 
-type UserService interface {
-	GetUser(ctx context.Context, id int64) (*models.User, error)
-	CreateUser(ctx context.Context, username, email, password string) (*models.User, error)
-}
-
 type userService struct {
-	userRepo repository.UserRepository
+	userRepo repository.IUserRepository
 }
 
-func NewUserService(userRepo repository.UserRepository) UserService {
+func NewUserService(userRepo repository.IUserRepository) IUserService {
 	return &userService{
 		userRepo: userRepo,
 	}
