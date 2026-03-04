@@ -1,8 +1,9 @@
+# user-management-api/test/user.http
 @host = http://localhost:8086/api/v1
 @apiKey = william-hehe
 
 ###
-GET {{host}}/users/1772532052310301823
+GET {{host}}/users/1772594263538205928
 Content-Type: application/json
 X-API-Key: {{apiKey}}
 

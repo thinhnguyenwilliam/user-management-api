@@ -12,6 +12,7 @@ import (
 	"github.com/thinhnguyenwilliam/user-management-api/internal/config"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/middleware"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/routes"
+	"github.com/thinhnguyenwilliam/user-management-api/internal/validation"
 )
 
 type Module interface {
@@ -19,12 +20,20 @@ type Module interface {
 }
 
 type Application struct {
-	config  *config.Config
-	router  *gin.Engine
-	modules []Module
+	config     *config.Config
+	router     *gin.Engine
+	modules    []Module
+	rabbitConn *amqp091.Connection
 }
 
 func NewApplication(cfg *config.Config) (*Application, error) {
+	validateConfig(cfg)
+
+	// ✅ Init validation
+	if err := validation.InitValidation(); err != nil {
+		return nil, err
+	}
+
 	// 1️⃣ Init Redis
 	rdb, err := cache.NewRedisClient(cfg.Redis)
 	if err != nil {
@@ -39,7 +48,6 @@ func NewApplication(cfg *config.Config) (*Application, error) {
 	if err != nil {
 		return nil, err
 	}
-	_ = conn
 	log.Println("Connected to RabbitMQ")
 
 	// 3️⃣ Init Gin
@@ -48,7 +56,7 @@ func NewApplication(cfg *config.Config) (*Application, error) {
 	r.Use(gin.Recovery())
 	r.SetTrustedProxies(nil)
 
-	//
+	// Middlewares
 	rateLimiter := middleware.NewRateLimiter(
 		5,             // 5 requests/sec
 		15,            // burst
@@ -60,7 +68,7 @@ func NewApplication(cfg *config.Config) (*Application, error) {
 		rateLimiter.Middleware(),
 		middleware.ApiKeyMiddleware(cfg.ApiKey),
 	}
-	// Load modules
+	// Load modules (inject dependencies properly)
 	modules := []Module{
 		NewUserModule(),
 	}
@@ -68,10 +76,23 @@ func NewApplication(cfg *config.Config) (*Application, error) {
 	routes.RegisterRoutes(r, middlewares, routeList...)
 
 	return &Application{
-		config:  cfg,
-		router:  r,
-		modules: modules,
+		config:     cfg,
+		router:     r,
+		modules:    modules,
+		rabbitConn: conn,
 	}, nil
+}
+
+func validateConfig(cfg *config.Config) {
+	if cfg.Port == "" {
+		log.Fatal("PORT is required")
+	}
+	if cfg.ApiKey == "" {
+		log.Fatal("API_KEY is required")
+	}
+	if cfg.RabbitMQ.URL == "" {
+		log.Fatal("RABBITMQ_URL is required")
+	}
 }
 
 func collectRoutes(modules []Module) []routes.Route {
@@ -87,4 +108,11 @@ func collectRoutes(modules []Module) []routes.Route {
 func (a *Application) Run() error {
 	log.Println("Server running on port:", a.config.Port)
 	return a.router.Run(":" + a.config.Port)
+}
+
+func (a *Application) Shutdown() {
+	if a.rabbitConn != nil {
+		_ = a.rabbitConn.Close()
+	}
+	log.Println("Application shutdown complete")
 }

@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -52,15 +54,23 @@ func LoggerMiddleware() gin.HandlerFunc {
 }
 
 func newHTTPLogger() zerolog.Logger {
+	logDir := "internal/logs"
+
+	if err := os.MkdirAll(logDir, os.ModePerm); err != nil {
+		panic(err)
+	}
+
+	today := time.Now().Format("2006-01-02")
+	logFile := filepath.Join(logDir, "http-"+today+".log")
+
 	return zerolog.New(&lumberjack.Logger{
-		Filename:   "logs/http.log",
-		MaxSize:    1,
-		MaxBackups: 5,
-		MaxAge:     5,
+		Filename:   logFile,
+		MaxSize:    100, // MB
+		MaxBackups: 7,
+		MaxAge:     7,
 		Compress:   true,
 	}).With().Timestamp().Logger()
 }
-
 func wrapResponseWriter(ctx *gin.Context) *CustomResponseWriter {
 	writer := &CustomResponseWriter{
 		ResponseWriter: ctx.Writer,
