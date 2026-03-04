@@ -19,7 +19,7 @@ func NewUserRoutes(userHandler *handler.UserHandler) *UserRoutes {
 func (r *UserRoutes) Register(rg *gin.RouterGroup) {
 	userGroup := rg.Group("/users")
 	{
-		userGroup.GET("/:id", r.userHandler.GetUser)
+		// userGroup.GET("/:id", r.userHandler.GetUser)
 		userGroup.POST("/", r.userHandler.CreateUser)
 	}
 }

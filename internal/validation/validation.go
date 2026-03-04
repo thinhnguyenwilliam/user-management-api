@@ -23,7 +23,10 @@ func InitValidation() error {
 func HandleValidationErrors(err error) gin.H {
 	validationErrors, ok := err.(validator.ValidationErrors)
 	if !ok {
-		return gin.H{"error": "Yêu cầu không hợp lệ: " + err.Error()}
+		return gin.H{
+			"error":  "Yêu cầu không hợp lệ",
+			"detail": err.Error(),
+		}
 	}
 
 	errors := make(map[string]string)
@@ -89,7 +92,7 @@ func translateError(field string, e validator.FieldError) string {
 		return fmt.Sprintf("%s phải có giá trị bé hơn %s", field, e.Param())
 
 	case "oneof":
-		values := strings.Join(strings.Split(e.Param(), " "), ",")
+		values := strings.Join(strings.Split(e.Param(), " "), ", ")
 		return fmt.Sprintf("%s phải là một trong các giá trị: %s", field, values)
 
 	case "required":

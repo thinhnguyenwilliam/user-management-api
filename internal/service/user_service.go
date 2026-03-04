@@ -4,8 +4,8 @@ package service
 import (
 	"context"
 	"errors"
-	"time"
 
+	"github.com/google/uuid"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/models"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/repository"
 )
@@ -20,23 +20,19 @@ func NewUserService(userRepo repository.IUserRepository) IUserService {
 	}
 }
 
-func (s *userService) GetUser(ctx context.Context, id int64) (*models.User, error) {
-	return s.userRepo.GetByID(ctx, id)
-}
-
 func (s *userService) CreateUser(
 	ctx context.Context,
-	username, email, password string,
+	name, email, password string,
 ) (*models.User, error) {
 
-	if username == "" || email == "" || password == "" {
+	if name == "" || email == "" || password == "" {
 		return nil, errors.New("missing required fields")
 	}
 
 	user := &models.User{
-		ID:       time.Now().UnixNano(), // demo ID
-		Username: username,
-		Email:    email,
+		UUID:  uuid.NewString(),
+		Name:  name,
+		Email: email,
 	}
 
 	if err := s.userRepo.Create(ctx, user); err != nil {
@@ -44,4 +40,8 @@ func (s *userService) CreateUser(
 	}
 
 	return user, nil
+}
+
+func (s *userService) GetUser(ctx context.Context, id uuid.UUID) (*models.User, error) {
+	return s.userRepo.GetByID(ctx, id)
 }

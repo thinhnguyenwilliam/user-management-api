@@ -14,7 +14,9 @@ Content-Type: application/json
 X-API-Key: {{apiKey}}
 
 {
-  "username": "thinh",
-  "email": "thinh@example.com",
-  "password": "12345678"
+  "name": "Tai",
+  "email": "tai@example.com",
+  "age": 22,
+  "password": "12345678",
+  "level": 2
 }
