@@ -3,12 +3,14 @@ package app
 
 import (
 	"log"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rabbitmq/amqp091-go"
 
 	"github.com/thinhnguyenwilliam/user-management-api/internal/cache"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/config"
+	"github.com/thinhnguyenwilliam/user-management-api/internal/middleware"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/routes"
 )
 
@@ -17,8 +19,9 @@ type Module interface {
 }
 
 type Application struct {
-	config *config.Config
-	router *gin.Engine
+	config  *config.Config
+	router  *gin.Engine
+	modules []Module
 }
 
 func NewApplication(cfg *config.Config) (*Application, error) {
@@ -45,16 +48,29 @@ func NewApplication(cfg *config.Config) (*Application, error) {
 	r.Use(gin.Recovery())
 	r.SetTrustedProxies(nil)
 
+	//
+	rateLimiter := middleware.NewRateLimiter(
+		5,             // 5 requests/sec
+		15,            // burst
+		3*time.Minute, // client TTL
+	)
+
+	middlewares := []gin.HandlerFunc{
+		middleware.LoggerMiddleware(),
+		rateLimiter.Middleware(),
+		middleware.ApiKeyMiddleware(cfg.ApiKey),
+	}
 	// Load modules
 	modules := []Module{
 		NewUserModule(),
 	}
 	routeList := collectRoutes(modules)
-	routes.RegisterRoutes(r, routeList...)
+	routes.RegisterRoutes(r, middlewares, routeList...)
 
 	return &Application{
-		config: cfg,
-		router: r,
+		config:  cfg,
+		router:  r,
+		modules: modules,
 	}, nil
 }
 
