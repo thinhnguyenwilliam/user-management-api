@@ -1,10 +1,14 @@
 // user-management-api/internal/models/user.go
 package models
 
-import "time"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type User struct {
-	UUID           string    `json:"uuid"`
+	UUID           uuid.UUID `json:"uuid"`
 	Name           string    `json:"name"`
 	Email          string    `json:"email"`
 	Age            int       `json:"age"`
@@ -16,8 +20,8 @@ type User struct {
 }
 
 type CreateUserRequest struct {
-	Name     string `json:"name" binding:"required"`
-	Email    string `json:"email" binding:"required,email"`
+	Name     string `json:"name"`
+	Email    string `json:"email"`
 	Age      int    `json:"age"`
 	Password string `json:"password" binding:"required,min=6"`
 	Level    int    `json:"level" binding:"required,oneof=1 2"`

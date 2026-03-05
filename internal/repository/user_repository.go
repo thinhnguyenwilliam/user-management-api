@@ -6,7 +6,6 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/google/uuid"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/models"
 )
 
@@ -21,25 +20,31 @@ func NewUserRepository() *InMemoryUserRepository {
 	}
 }
 
+func (r *InMemoryUserRepository) FindByEmail(
+	ctx context.Context,
+	email string,
+) (*models.User, error) {
+
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	for _, user := range r.users {
+		if user.Email == email {
+			return user, nil
+		}
+	}
+
+	return nil, errors.New("user not found")
+}
+
 func (r *InMemoryUserRepository) Create(ctx context.Context, user *models.User) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	if _, exists := r.users[user.UUID]; exists {
+	if _, exists := r.users[user.UUID.String()]; exists {
 		return errors.New("user already exists")
 	}
 
-	r.users[user.UUID] = user
+	r.users[user.UUID.String()] = user
 	return nil
-}
-
-func (r *InMemoryUserRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.User, error) {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-
-	user, ok := r.users[id.String()]
-	if !ok {
-		return nil, errors.New("user not found")
-	}
-	return user, nil
 }

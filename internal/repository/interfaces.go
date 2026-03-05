@@ -1,13 +1,13 @@
+// user-management-api/internal/repository/interfaces.go
 package repository
 
 import (
 	"context"
 
-	"github.com/google/uuid"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/models"
 )
 
 type IUserRepository interface {
-	GetByID(ctx context.Context, id uuid.UUID) (*models.User, error)
+	FindByEmail(ctx context.Context, email string) (*models.User, error)
 	Create(ctx context.Context, user *models.User) error
 }

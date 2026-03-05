@@ -1,4 +1,6 @@
 // user-management-api/cmd/api/main.go
+// sudo lsof -i :8086
+// sudo kill -9 130765
 package main
 
 import (

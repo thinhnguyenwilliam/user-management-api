@@ -3,7 +3,7 @@
 @apiKey = william-hehe
 
 ###
-GET {{host}}/users/1772594263538205928
+GET {{host}}/users/e35c8ea9-6e46-47e3-bd0b-2496364e9ebe
 Content-Type: application/json
 X-API-Key: {{apiKey}}
 
@@ -15,7 +15,7 @@ X-API-Key: {{apiKey}}
 
 {
   "name": "Tai",
-  "email": "tai@example.com",
+  "email": "tai5@example.com",
   "age": 22,
   "password": "12345678",
   "level": 2
