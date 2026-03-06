@@ -2,6 +2,7 @@
 package app
 
 import (
+	"github.com/thinhnguyenwilliam/user-management-api/internal/db"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/handler"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/repository"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/routes"
@@ -13,7 +14,7 @@ type UserModule struct {
 }
 
 func NewUserModule() *UserModule {
-	userRepo := repository.NewUserRepository()
+	userRepo := repository.NewUserRepository(db.DB)
 	userService := service.NewUserService(userRepo)
 	userHandler := handler.NewUserHandler(userService)
 

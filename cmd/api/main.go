@@ -8,12 +8,18 @@ import (
 
 	"github.com/thinhnguyenwilliam/user-management-api/internal/app"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/config"
+	"github.com/thinhnguyenwilliam/user-management-api/internal/db"
 )
 
 func main() {
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		log.Fatal("cannot load config:", err)
+	}
+
+	err = db.InitDB(cfg)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	application, err := app.NewApplication(cfg)

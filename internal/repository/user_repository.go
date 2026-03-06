@@ -3,48 +3,53 @@ package repository
 
 import (
 	"context"
-	"errors"
-	"sync"
 
 	"github.com/thinhnguyenwilliam/user-management-api/internal/models"
+	"gorm.io/gorm"
 )
 
-type InMemoryUserRepository struct {
-	mu    sync.RWMutex
-	users map[string]*models.User
+type userRepository struct {
+	db *gorm.DB
 }
 
-func NewUserRepository() *InMemoryUserRepository {
-	return &InMemoryUserRepository{
-		users: make(map[string]*models.User),
+func NewUserRepository(db *gorm.DB) IUserRepository {
+	return &userRepository{
+		db: db,
 	}
 }
 
-func (r *InMemoryUserRepository) FindByEmail(
-	ctx context.Context,
-	email string,
-) (*models.User, error) {
+func (r *userRepository) FindByEmail(ctx context.Context, email string) (*models.User, error) {
+	var user models.User
 
-	r.mu.RLock()
-	defer r.mu.RUnlock()
+	err := r.db.WithContext(ctx).
+		Where("email = ?", email).
+		First(&user).Error
 
-	for _, user := range r.users {
-		if user.Email == email {
-			return user, nil
-		}
+	if err != nil {
+		return nil, err
 	}
 
-	return nil, errors.New("user not found")
+	return &user, nil
 }
 
-func (r *InMemoryUserRepository) Create(ctx context.Context, user *models.User) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
+func (r *userRepository) Create(ctx context.Context, user *models.User) error {
+	return r.db.WithContext(ctx).Create(user).Error
+}
 
-	if _, exists := r.users[user.UUID.String()]; exists {
-		return errors.New("user already exists")
+func (r *userRepository) GetByID(ctx context.Context, id int) (*models.User, error) {
+	var user models.User
+
+	err := r.db.WithContext(ctx).
+		First(&user, id).Error
+
+	if err != nil {
+		return nil, err
 	}
 
-	r.users[user.UUID.String()] = user
-	return nil
+	return &user, nil
+}
+
+func (r *userRepository) Delete(ctx context.Context, id int) error {
+	return r.db.WithContext(ctx).
+		Delete(&models.User{}, id).Error
 }

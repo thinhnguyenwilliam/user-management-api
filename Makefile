@@ -26,6 +26,7 @@ migrate_force:
 # make create_migration name=create_profiles_table
 # make create_migration name=add_phone_to_users
 # make create_migration name=rename_phone_column
+# make create_migration name=add_password_to_users
 create_migration:
 	migrate create -ext sql -dir internal/db/migrations -seq $(name)
 

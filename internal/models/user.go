@@ -3,26 +3,13 @@ package models
 
 import (
 	"time"
-
-	"github.com/google/uuid"
 )
 
 type User struct {
-	UUID           uuid.UUID `json:"uuid"`
-	Name           string    `json:"name"`
-	Email          string    `json:"email"`
-	Age            int       `json:"age"`
-	Status         int       `json:"status"`
-	Level          int       `json:"level"`
-	HashedPassword string    `json:"-"`
-	CreatedAt      time.Time `json:"created_at"`
-	UpdatedAt      time.Time `json:"updated_at"`
-}
-
-type CreateUserRequest struct {
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	Age      int    `json:"age"`
-	Password string `json:"password" binding:"required,min=6"`
-	Level    int    `json:"level" binding:"required,oneof=1 2"`
+	UserID         int       `gorm:"column:user_id;primaryKey"`
+	Name           string    `gorm:"column:name"`
+	Email          string    `gorm:"column:email"`
+	HashedPassword string    `gorm:"column:hashed_password"`
+	PhoneNumber    string    `gorm:"column:phone_number"`
+	CreatedAt      time.Time `gorm:"column:created_at"`
 }

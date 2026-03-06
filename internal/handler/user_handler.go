@@ -3,7 +3,8 @@ package handler
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/thinhnguyenwilliam/user-management-api/internal/models"
+	"github.com/thinhnguyenwilliam/user-management-api/internal/models/dto"
+	"github.com/thinhnguyenwilliam/user-management-api/internal/models/mapper"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/service"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/utils"
 )
@@ -19,7 +20,7 @@ func NewUserHandler(userService service.IUserService) *UserHandler {
 }
 
 func (h *UserHandler) CreateUser(c *gin.Context) {
-	var req models.CreateUserRequest
+	var req dto.CreateUserRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.ResponseError(c, utils.NewError("invalid request", utils.ErrCodeBadRequest))
@@ -35,5 +36,7 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 		return
 	}
 
-	utils.ResponseSuccess(c, 200, user)
+	resp := mapper.ToUserResponse(user)
+
+	utils.ResponseSuccess(c, 200, resp)
 }

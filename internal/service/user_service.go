@@ -4,8 +4,9 @@ package service
 import (
 	"context"
 
-	"github.com/google/uuid"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/models"
+	"github.com/thinhnguyenwilliam/user-management-api/internal/models/dto"
+	"github.com/thinhnguyenwilliam/user-management-api/internal/models/mapper"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/repository"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/utils"
 )
@@ -22,7 +23,7 @@ func NewUserService(userRepo repository.IUserRepository) IUserService {
 
 func (s *userService) CreateUser(
 	ctx context.Context,
-	req models.CreateUserRequest,
+	req dto.CreateUserRequest,
 ) (*models.User, error) {
 
 	if req.Name == "" || req.Email == "" || req.Password == "" {
@@ -43,12 +44,7 @@ func (s *userService) CreateUser(
 		return nil, utils.WrapError("failed to hash password", utils.ErrCodeInternal, err)
 	}
 
-	user := &models.User{
-		UUID:           uuid.New(),
-		Name:           req.Name,
-		Email:          email,
-		HashedPassword: hashedPassword,
-	}
+	user := mapper.ToUserModel(req, hashedPassword)
 
 	if err := s.userRepo.Create(ctx, user); err != nil {
 		return nil, utils.WrapError("failed to create user", utils.ErrCodeDatabase, err)
