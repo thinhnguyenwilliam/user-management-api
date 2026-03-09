@@ -17,7 +17,7 @@ func main() {
 		log.Fatal("cannot load config:", err)
 	}
 
-	err = db.InitDB(cfg)
+	err = db.InitDBV2(cfg)
 	if err != nil {
 		log.Fatal(err)
 	}

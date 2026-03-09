@@ -10,7 +10,16 @@ API_KEY=william-hehe
 DB_URL=postgres://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable
 
 .PHONY: run build test clean dev rate-limit export_sql import_sql create_db \
-		create_migration migrate_up migrate_down
+		create_migration migrate_up migrate_down drop_db sqlc mock
+
+mock:
+	mockgen -source=internal/db/sqlc/querier.go -destination=internal/mocks/mock_db.go
+	
+sqlc:
+	sqlc generate
+
+drop_db:
+	migrate -path internal/db/migrations -database "$(DB_URL)" drop -f
 
 migrate_up:
 	migrate -path internal/db/migrations -database "$(DB_URL)" up

@@ -4,52 +4,80 @@ package repository
 import (
 	"context"
 
+	sqlc "github.com/thinhnguyenwilliam/user-management-api/internal/db/sqlc"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/models"
-	"gorm.io/gorm"
+	"github.com/thinhnguyenwilliam/user-management-api/internal/models/mapper"
 )
 
 type userRepository struct {
-	db *gorm.DB
+	q sqlc.Querier
 }
 
-func NewUserRepository(db *gorm.DB) IUserRepository {
+func NewUserRepository(q sqlc.Querier) IUserRepository {
 	return &userRepository{
-		db: db,
+		q: q,
 	}
 }
 
-func (r *userRepository) FindByEmail(ctx context.Context, email string) (*models.User, error) {
-	var user models.User
+func (r *userRepository) Create(
+	ctx context.Context,
+	user *models.User,
+) error {
 
-	err := r.db.WithContext(ctx).
-		Where("email = ?", email).
-		First(&user).Error
+	params := mapper.ToCreateUserParams(user)
 
+	result, err := r.q.CreateUser(ctx, params)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return &user, nil
+	mapper.MapUserFromDB(result, user)
+
+	return nil
 }
 
-func (r *userRepository) Create(ctx context.Context, user *models.User) error {
-	return r.db.WithContext(ctx).Create(user).Error
-}
+// type userRepository struct {
+// 	db *gorm.DB
+// }
 
-func (r *userRepository) GetByID(ctx context.Context, id int) (*models.User, error) {
-	var user models.User
+// func NewUserRepository(db *gorm.DB) IUserRepository {
+// 	return &userRepository{
+// 		db: db,
+// 	}
+// }
 
-	err := r.db.WithContext(ctx).
-		First(&user, id).Error
+// func (r *userRepository) FindByEmail(ctx context.Context, email string) (*models.User, error) {
+// 	var user models.User
 
-	if err != nil {
-		return nil, err
-	}
+// 	err := r.db.WithContext(ctx).
+// 		Where("email = ?", email).
+// 		First(&user).Error
 
-	return &user, nil
-}
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-func (r *userRepository) Delete(ctx context.Context, id int) error {
-	return r.db.WithContext(ctx).
-		Delete(&models.User{}, id).Error
-}
+// 	return &user, nil
+// }
+
+// func (r *userRepository) Create(ctx context.Context, user *models.User) error {
+// 	return r.db.WithContext(ctx).Create(user).Error
+// }
+
+// func (r *userRepository) GetByID(ctx context.Context, id int) (*models.User, error) {
+// 	var user models.User
+
+// 	err := r.db.WithContext(ctx).
+// 		First(&user, id).Error
+
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	return &user, nil
+// }
+
+// func (r *userRepository) Delete(ctx context.Context, id int) error {
+// 	return r.db.WithContext(ctx).
+// 		Delete(&models.User{}, id).Error
+// }

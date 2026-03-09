@@ -11,3 +11,7 @@ import (
 type IUserService interface {
 	CreateUser(ctx context.Context, req dto.CreateUserRequest) (*models.User, error)
 }
+
+// type IUserService interface {
+// 	CreateUser(ctx context.Context, req dto.CreateUserRequest) (*models.User, error)
+// }
