@@ -1,16 +1,16 @@
 // user-management-api/internal/routes/user_routes.go
-package routes
+package v1routes
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/thinhnguyenwilliam/user-management-api/internal/handler"
+	v1handler "github.com/thinhnguyenwilliam/user-management-api/internal/handler/v1"
 )
 
 type UserRoutes struct {
-	userHandler *handler.UserHandler
+	userHandler *v1handler.UserHandler
 }
 
-func NewUserRoutes(userHandler *handler.UserHandler) *UserRoutes {
+func NewUserRoutes(userHandler *v1handler.UserHandler) *UserRoutes {
 	return &UserRoutes{
 		userHandler: userHandler,
 	}

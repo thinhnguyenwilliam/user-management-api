@@ -1,11 +1,12 @@
-// user-management-api/internal/service/user_service.go
-package service
+// user-management-api/internal/service/v1/user_service.go
+package v1service
 
 import (
 	"context"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/models"
-	"github.com/thinhnguyenwilliam/user-management-api/internal/models/dto"
+	v1dto "github.com/thinhnguyenwilliam/user-management-api/internal/models/dto/v1"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/models/mapper"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/repository"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/utils"
@@ -21,9 +22,16 @@ func NewUserService(userRepo repository.IUserRepository) IUserService {
 	}
 }
 
+func isDuplicateKey(err error) bool {
+	if pgErr, ok := err.(*pgconn.PgError); ok {
+		return pgErr.Code == "23505"
+	}
+	return false
+}
+
 func (s *userService) CreateUser(
 	ctx context.Context,
-	req dto.CreateUserRequest,
+	req v1dto.CreateUserRequest,
 ) (*models.User, error) {
 
 	if req.Name == "" || req.Email == "" || req.Password == "" {
@@ -39,7 +47,12 @@ func (s *userService) CreateUser(
 
 	err = s.userRepo.Create(ctx, user)
 	if err != nil {
-		return nil, err
+
+		if isDuplicateKey(err) {
+			return nil, utils.NewError("email already exists", utils.ErrCodeConflict)
+		}
+
+		return nil, utils.WrapError("failed to create user", utils.ErrCodeDatabase, err)
 	}
 
 	return user, nil

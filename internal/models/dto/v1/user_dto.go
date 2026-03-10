@@ -1,4 +1,4 @@
-package dto
+package v1dto
 
 type CreateUserRequest struct {
 	Name        string

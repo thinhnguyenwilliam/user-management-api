@@ -4,7 +4,7 @@ package mapper
 import (
 	sqlc "github.com/thinhnguyenwilliam/user-management-api/internal/db/sqlc"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/models"
-	"github.com/thinhnguyenwilliam/user-management-api/internal/models/dto"
+	v1dto "github.com/thinhnguyenwilliam/user-management-api/internal/models/dto/v1"
 )
 
 func MapUserFromDB(src sqlc.User, dst *models.User) {
@@ -33,7 +33,7 @@ func ToCreateUserParams(user *models.User) sqlc.CreateUserParams {
 	}
 }
 
-func ToUserModel(req dto.CreateUserRequest, hashedPassword string) *models.User {
+func ToUserModel(req v1dto.CreateUserRequest, hashedPassword string) *models.User {
 	return &models.User{
 		Name:           req.Name,
 		Email:          req.Email,
@@ -41,8 +41,8 @@ func ToUserModel(req dto.CreateUserRequest, hashedPassword string) *models.User 
 	}
 }
 
-func ToUserResponse(user *models.User) *dto.UserResponse {
-	return &dto.UserResponse{
+func ToUserResponse(user *models.User) *v1dto.UserResponse {
+	return &v1dto.UserResponse{
 		Id:          user.UserID,
 		Name:        user.Name,
 		Email:       user.Email,
