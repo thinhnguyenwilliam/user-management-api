@@ -2,7 +2,11 @@
 package app
 
 import (
+	"context"
 	"log"
+	"net/http"
+	"os"
+	"os/signal"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -106,8 +110,35 @@ func collectRoutes(modules []Module) []routes.Route {
 }
 
 func (a *Application) Run() error {
-	log.Println("Server running on port:", a.config.Port)
-	return a.router.Run(":" + a.config.Port)
+	addr := ":" + a.config.Port
+
+	server := &http.Server{
+		Addr:           addr,
+		Handler:        a.router,
+		ReadTimeout:    5 * time.Second,
+		WriteTimeout:   10 * time.Second,
+		IdleTimeout:    120 * time.Second,
+		MaxHeaderBytes: 1 << 20,
+	}
+
+	go func() {
+		log.Println("Server running on", addr)
+
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatal(err)
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt)
+
+	<-quit
+	log.Println("Shutting down server...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	return server.Shutdown(ctx)
 }
 
 func (a *Application) Shutdown() {
