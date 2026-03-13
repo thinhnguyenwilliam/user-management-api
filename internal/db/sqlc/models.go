@@ -10,19 +10,18 @@ import (
 	"github.com/google/uuid"
 )
 
-type Profile struct {
-	ProfileID   int64  `json:"profile_id"`
-	UserID      int64  `json:"user_id"`
-	PhoneNumber string `json:"phone_number"`
-	Address     string `json:"address"`
-}
-
 type User struct {
-	UserID         int64     `json:"user_id"`
-	Uuid           uuid.UUID `json:"uuid"`
-	Name           string    `json:"name"`
-	Email          string    `json:"email"`
-	CreatedAt      time.Time `json:"created_at"`
-	PhoneNumber    string    `json:"phone_number"`
-	HashedPassword string    `json:"hashed_password"`
+	UserUuid     uuid.UUID `json:"user_uuid"`
+	UserFullname string    `json:"user_fullname"`
+	UserEmail    string    `json:"user_email"`
+	UserPassword string    `json:"user_password"`
+	// Age of user (1-150)
+	UserAge *int32 `json:"user_age"`
+	// 1: active, 2: inactive, 3: banned
+	UserStatus int32 `json:"user_status"`
+	// 1: admin, 2: moderator, 3: member
+	UserLevel     int32      `json:"user_level"`
+	UserDeletedAt *time.Time `json:"user_deleted_at"`
+	UserCreatedAt time.Time  `json:"user_created_at"`
+	UserUpdatedAt time.Time  `json:"user_updated_at"`
 }

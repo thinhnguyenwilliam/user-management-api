@@ -57,8 +57,6 @@ func NewApplication(cfg *config.Config) (*Application, error) {
 	// 3️⃣ Init Gin
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
-	r.Use(gin.Recovery())
-	r.SetTrustedProxies(nil)
 
 	// Middlewares
 	rateLimiter := middleware.NewRateLimiter(
@@ -68,6 +66,7 @@ func NewApplication(cfg *config.Config) (*Application, error) {
 	)
 
 	middlewares := []gin.HandlerFunc{
+		middleware.Recovery(),
 		middleware.LoggerMiddleware(),
 		rateLimiter.Middleware(),
 		middleware.ApiKeyMiddleware(cfg.ApiKey),

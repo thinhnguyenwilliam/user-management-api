@@ -24,3 +24,14 @@ sql:
 
           - db_type: "text"
             go_type: "string"
+
+          - column: "users.user_deleted_at"
+            go_type:
+              import: "time"
+              type: "Time"
+              pointer: true
+
+          - column: "users.user_age"
+            go_type:
+              type: "int32"
+              pointer: true

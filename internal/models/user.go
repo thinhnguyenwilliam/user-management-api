@@ -1,16 +1,14 @@
 // user-management-api/internal/models/user.go
 package models
 
-import "time"
-
-type User struct {
-	UserID         int
-	Name           string
-	Email          string
-	HashedPassword string
-	PhoneNumber    string
-	CreatedAt      time.Time
-}
+// type User struct {
+// 	UserID         int
+// 	Name           string
+// 	Email          string
+// 	HashedPassword string
+// 	PhoneNumber    string
+// 	CreatedAt      time.Time
+// }
 
 // type User struct {
 // 	UserID         int       `gorm:"column:user_id;primaryKey"`

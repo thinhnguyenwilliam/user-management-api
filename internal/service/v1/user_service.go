@@ -5,7 +5,8 @@ import (
 	"context"
 
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/thinhnguyenwilliam/user-management-api/internal/models"
+
+	db "github.com/thinhnguyenwilliam/user-management-api/internal/db/sqlc"
 	v1dto "github.com/thinhnguyenwilliam/user-management-api/internal/models/dto/v1"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/models/mapper"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/repository"
@@ -32,70 +33,29 @@ func isDuplicateKey(err error) bool {
 func (s *userService) CreateUser(
 	ctx context.Context,
 	req v1dto.CreateUserRequest,
-) (*models.User, error) {
+) (db.User, error) {
 
-	if req.Name == "" || req.Email == "" || req.Password == "" {
-		return nil, utils.NewError("missing required fields", utils.ErrCodeInvalidInput)
+	if req.Fullname == "" || req.Email == "" || req.Password == "" {
+		return db.User{}, utils.NewError("missing required fields", utils.ErrCodeInvalidInput)
 	}
 
 	hashedPassword, err := utils.HashPassword(req.Password)
 	if err != nil {
-		return nil, err
+		return db.User{}, err
 	}
 
-	user := mapper.ToUserModel(req, hashedPassword)
+	params := mapper.ToCreateUserParams(req, hashedPassword)
 
-	err = s.userRepo.Create(ctx, user)
+	user, err := s.userRepo.Create(ctx, params)
+
 	if err != nil {
 
 		if isDuplicateKey(err) {
-			return nil, utils.NewError("email already exists", utils.ErrCodeConflict)
+			return db.User{}, utils.NewError("email already exists", utils.ErrCodeConflict)
 		}
 
-		return nil, utils.WrapError("failed to create user", utils.ErrCodeDatabase, err)
+		return db.User{}, utils.WrapError("failed to create user", utils.ErrCodeDatabase, err)
 	}
 
 	return user, nil
 }
-
-// type userService struct {
-// 	userRepo repository.IUserRepository
-// }
-
-// func NewUserService(userRepo repository.IUserRepository) IUserService {
-// 	return &userService{
-// 		userRepo: userRepo,
-// 	}
-// }
-
-// func (s *userService) CreateUser(
-// 	ctx context.Context,
-// 	req dto.CreateUserRequest,
-// ) (*models.User, error) {
-
-// 	if req.Name == "" || req.Email == "" || req.Password == "" {
-// 		return nil, utils.NewError("missing required fields", utils.ErrCodeInvalidInput)
-// 	}
-
-// 	email := utils.NormalizeEmail(req.Email)
-
-// 	// check email exists
-// 	existingUser, _ := s.userRepo.FindByEmail(ctx, email)
-// 	if existingUser != nil {
-// 		return nil, utils.NewError("email already exists", utils.ErrCodeConflict)
-// 	}
-
-// 	// hash password
-// 	hashedPassword, err := utils.HashPassword(req.Password)
-// 	if err != nil {
-// 		return nil, utils.WrapError("failed to hash password", utils.ErrCodeInternal, err)
-// 	}
-
-// 	user := mapper.ToUserModel(req, hashedPassword)
-
-// 	if err := s.userRepo.Create(ctx, user); err != nil {
-// 		return nil, utils.WrapError("failed to create user", utils.ErrCodeDatabase, err)
-// 	}
-
-// 	return user, nil
-// }

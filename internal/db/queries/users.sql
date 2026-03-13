@@ -1,39 +1,64 @@
 -- name: CreateUser :one
 INSERT INTO users (
-    name,
-    email,
-    hashed_password
+    user_fullname,
+    user_email,
+    user_password,
+    user_age,
+    user_status,
+    user_level
 ) VALUES (
-    $1, $2, $3
+    $1, $2, $3, $4, $5, $6
 )
 RETURNING *;
 
--- name: GetUser :one
-SELECT user_id, uuid, name, email
-FROM users
-WHERE user_id = $1
-LIMIT 1;
 
 -- name: GetUserByUUID :one
 SELECT *
 FROM users
-WHERE uuid = $1
-LIMIT 1;
+WHERE user_uuid = $1
+AND user_deleted_at IS NULL;
+
+
+-- name: GetUserByEmail :one
+SELECT *
+FROM users
+WHERE user_email = $1
+AND user_deleted_at IS NULL;
+
 
 -- name: ListUsers :many
 SELECT *
 FROM users
-ORDER BY user_id
+WHERE user_deleted_at IS NULL
+ORDER BY user_created_at DESC
 LIMIT $1
 OFFSET $2;
 
--- name: DeleteUser :exec
-DELETE FROM users
-WHERE user_id = $1;
 
 -- name: UpdateUser :one
 UPDATE users
-SET name = $2,
-    email = $3
-WHERE user_id = $1
+SET
+    user_fullname = $2,
+    user_age = $3,
+    user_status = $4,
+    user_level = $5
+WHERE user_uuid = $1
+AND user_deleted_at IS NULL
 RETURNING *;
+
+
+-- name: UpdateUserPassword :exec
+UPDATE users
+SET user_password = $2
+WHERE user_uuid = $1;
+
+
+-- name: DeleteUserSoft :exec
+UPDATE users
+SET user_deleted_at = NOW()
+WHERE user_uuid = $1;
+
+
+-- name: DeleteUserHard :exec
+DELETE FROM users
+WHERE user_uuid = $1;

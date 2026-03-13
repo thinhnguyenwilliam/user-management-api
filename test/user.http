@@ -2,6 +2,18 @@
 @host = http://localhost:8086/api/v1
 @apiKey = william-hehe
 
+POST {{host}}/users
+Content-Type: application/json
+X-API-Key: {{apiKey}}
+
+{
+  "fullname": "Nguyen Van A 3",
+  "email": "nguyenvana3@example.com",
+  "password": "123456",
+  "age": 25
+}
+
+
 ###
 GET {{host}}/users/e35c8ea9-6e46-47e3-bd0b-2496364e9ebe
 Content-Type: application/json
@@ -9,13 +21,4 @@ X-API-Key: {{apiKey}}
 
 
 ###
-POST {{host}}/users
-Content-Type: application/json
-X-API-Key: {{apiKey}}
-
-{
-  "name": "Khai",
-  "email": "khai13@example.com",
-  "password": "12345678"
-}
 

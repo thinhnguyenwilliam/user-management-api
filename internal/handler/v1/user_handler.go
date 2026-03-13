@@ -3,6 +3,7 @@ package v1handler
 
 import (
 	"github.com/gin-gonic/gin"
+
 	v1dto "github.com/thinhnguyenwilliam/user-management-api/internal/models/dto/v1"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/models/mapper"
 	v1service "github.com/thinhnguyenwilliam/user-management-api/internal/service/v1"
@@ -21,7 +22,6 @@ func NewUserHandler(userService v1service.IUserService) *UserHandler {
 
 func (h *UserHandler) CreateUser(c *gin.Context) {
 	var req v1dto.CreateUserRequest
-
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.ResponseError(c, utils.NewError("invalid request", utils.ErrCodeBadRequest))
 		return
@@ -31,6 +31,7 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 		c.Request.Context(),
 		req,
 	)
+
 	if err != nil {
 		utils.ResponseError(c, err)
 		return
