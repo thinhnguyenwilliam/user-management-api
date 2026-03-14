@@ -17,12 +17,12 @@ func main() {
 		log.Fatal("cannot load config:", err)
 	}
 
-	err = db.InitDBV2(cfg)
+	pool, err := db.InitDB(cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	application, err := app.NewApplication(cfg)
+	application, err := app.NewApplication(cfg, pool)
 	if err != nil {
 		log.Fatal("cannot create application:", err)
 	}

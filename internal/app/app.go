@@ -10,10 +10,12 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rabbitmq/amqp091-go"
 
 	"github.com/thinhnguyenwilliam/user-management-api/internal/cache"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/config"
+	sqlc "github.com/thinhnguyenwilliam/user-management-api/internal/db/sqlc"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/middleware"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/routes"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/validation"
@@ -28,9 +30,10 @@ type Application struct {
 	router     *gin.Engine
 	modules    []Module
 	rabbitConn *amqp091.Connection
+	dbPool     *pgxpool.Pool
 }
 
-func NewApplication(cfg *config.Config) (*Application, error) {
+func NewApplication(cfg *config.Config, pool *pgxpool.Pool) (*Application, error) {
 	validateConfig(cfg)
 
 	// ✅ Init validation
@@ -71,9 +74,11 @@ func NewApplication(cfg *config.Config) (*Application, error) {
 		rateLimiter.Middleware(),
 		middleware.ApiKeyMiddleware(cfg.ApiKey),
 	}
+
+	store := sqlc.New(pool)
 	// Load modules (inject dependencies properly)
 	modules := []Module{
-		NewUserModule(),
+		NewUserModule(store),
 	}
 	routeList := collectRoutes(modules)
 	routes.RegisterRoutes(r, middlewares, routeList...)
@@ -83,6 +88,7 @@ func NewApplication(cfg *config.Config) (*Application, error) {
 		router:     r,
 		modules:    modules,
 		rabbitConn: conn,
+		dbPool:     pool,
 	}, nil
 }
 
