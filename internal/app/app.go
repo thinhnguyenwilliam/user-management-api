@@ -70,9 +70,10 @@ func NewApplication(cfg *config.Config, pool *pgxpool.Pool) (*Application, error
 
 	middlewares := []gin.HandlerFunc{
 		middleware.Recovery(),
+		middleware.TraceID(),
 		middleware.LoggerMiddleware(),
-		rateLimiter.Middleware(),
 		middleware.ApiKeyMiddleware(cfg.ApiKey),
+		rateLimiter.Middleware(),
 	}
 
 	store := sqlc.New(pool)

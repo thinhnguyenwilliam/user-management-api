@@ -197,10 +197,11 @@ func logHTTPEvent(
 	duration time.Duration,
 ) {
 	statusCode := writer.Status()
-
 	logEvent := chooseLogLevel(logger, statusCode)
+	traceID, _ := ctx.Get("trace_id")
 
 	logEvent.
+		Str("trace_id", traceID.(string)).
 		Str("method", ctx.Request.Method).
 		Str("path", ctx.Request.URL.Path).
 		Str("query", ctx.Request.URL.RawQuery).

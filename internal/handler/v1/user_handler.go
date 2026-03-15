@@ -3,6 +3,7 @@ package v1handler
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog/log"
 
 	v1dto "github.com/thinhnguyenwilliam/user-management-api/internal/models/dto/v1"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/models/mapper"
@@ -21,6 +22,11 @@ func NewUserHandler(userService v1service.IUserService) *UserHandler {
 }
 
 func (h *UserHandler) CreateUser(c *gin.Context) {
+	traceID, _ := c.Get("trace_id")
+	log.Info().
+		Str("trace_id", traceID.(string)).
+		Msg("getting user request")
+
 	var req v1dto.CreateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.ResponseError(c, utils.NewError("invalid request", utils.ErrCodeBadRequest))
