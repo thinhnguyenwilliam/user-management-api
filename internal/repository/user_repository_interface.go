@@ -1,4 +1,4 @@
-// user-management-api/internal/repository/interfaces.go
+// user-management-api/internal/repository/user_repository_interface.go
 package repository
 
 import (
@@ -9,4 +9,6 @@ import (
 
 type IUserRepository interface {
 	Create(ctx context.Context, arg db.CreateUserParams) (db.User, error)
+	GetByUUID(ctx context.Context, uuid string) (db.User, error)
+	Update(ctx context.Context, arg db.UpdateUserParams) (db.User, error)
 }

@@ -19,7 +19,8 @@ func NewUserRoutes(userHandler *v1handler.UserHandler) *UserRoutes {
 func (r *UserRoutes) Register(rg *gin.RouterGroup) {
 	userGroup := rg.Group("/users")
 	{
-		// userGroup.GET("/:id", r.userHandler.GetUser)
 		userGroup.POST("/", r.userHandler.CreateUser)
+		userGroup.GET("/:uuid", r.userHandler.GetUserByUUID)
+		userGroup.PUT("/:uuid", r.userHandler.UpdateUser)
 	}
 }

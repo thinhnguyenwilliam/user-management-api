@@ -5,6 +5,14 @@ import (
 	"github.com/google/uuid"
 )
 
+type UpdateUserRequest struct {
+	Password *string `json:"password"`
+	Fullname *string `json:"fullname"`
+	Age      *int32  `json:"age"`
+	Status   *int32  `json:"status"`
+	Level    *int32  `json:"level"`
+}
+
 type CreateUserRequest struct {
 	Fullname string `json:"fullname" binding:"required"`
 	Email    string `json:"email" binding:"required,email"`

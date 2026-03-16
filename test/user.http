@@ -2,16 +2,32 @@
 @host = http://localhost:8086/api/v1
 @apiKey = william-hehe
 
+###
+PUT {{host}}/users/249370d3-1c7b-4332-adc0-62756e278f04
+Content-Type: application/json
+X-API-Key: {{apiKey}}
+
+{
+  "fullname": "Nguyen Van B",
+  "age": 30
+}
+
+###
 POST {{host}}/users
 Content-Type: application/json
 X-API-Key: {{apiKey}}
 
 {
-  "fullname": "Nguyen Van A 4",
-  "email": "nguyenvana4@example.com",
+  "fullname": "Nguyen Van A 5",
+  "email": "nguyenvana5@example.com",
   "password": "123456",
   "age": 25
 }
+
+
+###
+GET {{host}}/users/249370d3-1c7b-4332-adc0-62756e278f04
+X-API-Key: {{apiKey}}
 
 
 ###
