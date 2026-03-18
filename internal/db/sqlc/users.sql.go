@@ -11,6 +11,34 @@ import (
 	"github.com/google/uuid"
 )
 
+const countUsers = `-- name: CountUsers :one
+SELECT count(*)
+FROM users
+WHERE (
+    $1::bool IS NULL
+    OR ($1::bool = TRUE AND user_deleted_at IS NOT NULL)
+    OR ($1::bool = FALSE AND user_deleted_at IS NULL)
+)
+AND (
+    $2::text IS NULL
+    OR $2::text = ''
+    OR user_email ILIKE '%' || $2::text || '%'
+    OR user_fullname ILIKE '%' || $2::text || '%'
+)
+`
+
+type CountUsersParams struct {
+	Deleted *bool   `json:"deleted"`
+	Search  *string `json:"search"`
+}
+
+func (q *Queries) CountUsers(ctx context.Context, arg CountUsersParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countUsers, arg.Deleted, arg.Search)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (
     user_fullname,
@@ -69,15 +97,30 @@ func (q *Queries) DeleteUserHard(ctx context.Context, userUuid uuid.UUID) error 
 	return err
 }
 
-const deleteUserSoft = `-- name: DeleteUserSoft :exec
+const deleteUserSoft = `-- name: DeleteUserSoft :one
 UPDATE users
 SET user_deleted_at = NOW()
 WHERE user_uuid = $1
+AND user_deleted_at IS NULL
+RETURNING user_uuid, user_fullname, user_email, user_password, user_age, user_status, user_level, user_deleted_at, user_created_at, user_updated_at
 `
 
-func (q *Queries) DeleteUserSoft(ctx context.Context, userUuid uuid.UUID) error {
-	_, err := q.db.Exec(ctx, deleteUserSoft, userUuid)
-	return err
+func (q *Queries) DeleteUserSoft(ctx context.Context, userUuid uuid.UUID) (User, error) {
+	row := q.db.QueryRow(ctx, deleteUserSoft, userUuid)
+	var i User
+	err := row.Scan(
+		&i.UserUuid,
+		&i.UserFullname,
+		&i.UserEmail,
+		&i.UserPassword,
+		&i.UserAge,
+		&i.UserStatus,
+		&i.UserLevel,
+		&i.UserDeletedAt,
+		&i.UserCreatedAt,
+		&i.UserUpdatedAt,
+	)
+	return i, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
@@ -173,6 +216,83 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 		return nil, err
 	}
 	return items, nil
+}
+
+const listUsersOrderByCreatedAtDesc = `-- name: ListUsersOrderByCreatedAtDesc :many
+SELECT user_uuid, user_fullname, user_email, user_password, user_age, user_status, user_level, user_deleted_at, user_created_at, user_updated_at
+FROM users
+WHERE user_deleted_at IS NULL
+AND (
+    $3::text IS NULL
+    OR $3::text = ''
+    OR user_email ILIKE '%' || $3::text || '%'
+    OR user_fullname ILIKE '%' || $3::text || '%'
+)
+ORDER BY user_created_at DESC
+LIMIT $1 OFFSET $2
+`
+
+type ListUsersOrderByCreatedAtDescParams struct {
+	Limit  int32   `json:"limit"`
+	Offset int32   `json:"offset"`
+	Search *string `json:"search"`
+}
+
+func (q *Queries) ListUsersOrderByCreatedAtDesc(ctx context.Context, arg ListUsersOrderByCreatedAtDescParams) ([]User, error) {
+	rows, err := q.db.Query(ctx, listUsersOrderByCreatedAtDesc, arg.Limit, arg.Offset, arg.Search)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []User{}
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.UserUuid,
+			&i.UserFullname,
+			&i.UserEmail,
+			&i.UserPassword,
+			&i.UserAge,
+			&i.UserStatus,
+			&i.UserLevel,
+			&i.UserDeletedAt,
+			&i.UserCreatedAt,
+			&i.UserUpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const restoreUser = `-- name: RestoreUser :one
+UPDATE users
+SET user_deleted_at = NULL
+WHERE user_uuid = $1
+AND user_deleted_at IS NOT NULL
+RETURNING user_uuid, user_fullname, user_email, user_password, user_age, user_status, user_level, user_deleted_at, user_created_at, user_updated_at
+`
+
+func (q *Queries) RestoreUser(ctx context.Context, userUuid uuid.UUID) (User, error) {
+	row := q.db.QueryRow(ctx, restoreUser, userUuid)
+	var i User
+	err := row.Scan(
+		&i.UserUuid,
+		&i.UserFullname,
+		&i.UserEmail,
+		&i.UserPassword,
+		&i.UserAge,
+		&i.UserStatus,
+		&i.UserLevel,
+		&i.UserDeletedAt,
+		&i.UserCreatedAt,
+		&i.UserUpdatedAt,
+	)
+	return i, err
 }
 
 const updateUser = `-- name: UpdateUser :one

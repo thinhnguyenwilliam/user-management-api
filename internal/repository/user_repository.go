@@ -20,6 +20,38 @@ func NewUserRepository(q db.Querier) IUserRepository {
 	}
 }
 
+func (r *userRepository) CountUsers(ctx context.Context, params db.CountUsersParams) (int64, error) {
+	return r.q.CountUsers(ctx, params)
+}
+
+func (r *userRepository) DeleteSoft(
+	ctx context.Context,
+	userUUID uuid.UUID,
+) (db.User, error) {
+
+	traceID := ctx.Value(middleware.TraceIDKey).(string)
+
+	log.Info().
+		Str("trace_id", traceID).
+		Msg("soft deleting user")
+
+	return r.q.DeleteUserSoft(ctx, userUUID)
+}
+
+func (r *userRepository) Restore(
+	ctx context.Context,
+	userUUID uuid.UUID,
+) (db.User, error) {
+
+	traceID := ctx.Value(middleware.TraceIDKey).(string)
+
+	log.Info().
+		Str("trace_id", traceID).
+		Msg("restoring user")
+
+	return r.q.RestoreUser(ctx, userUUID)
+}
+
 func (r *userRepository) Update(
 	ctx context.Context,
 	arg db.UpdateUserParams,
@@ -32,6 +64,10 @@ func (r *userRepository) Update(
 		Msg("updating user")
 
 	return r.q.UpdateUser(ctx, arg)
+}
+
+func (r *userRepository) ListUsers(ctx context.Context, arg db.ListUsersOrderByCreatedAtDescParams) ([]db.User, error) {
+	return r.q.ListUsersOrderByCreatedAtDesc(ctx, arg)
 }
 
 func (r *userRepository) Create(ctx context.Context, arg db.CreateUserParams) (db.User, error) {

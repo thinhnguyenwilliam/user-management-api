@@ -1,6 +1,21 @@
 # user-management-api/test/user.http
 @host = http://localhost:8086/api/v1
 @apiKey = william-hehe
+@uuid = 249370d3-1c7b-4332-adc0-62756e278f04
+
+###
+GET {{host}}/users?limit=10&offset=0&search=Nguyen&sort=created_at&order=desc
+X-API-Key: {{apiKey}}
+
+
+###
+DELETE {{host}}/users/{{uuid}}
+X-API-Key: {{apiKey}}
+
+###
+PATCH {{host}}/users/{{uuid}}/restore
+X-API-Key: {{apiKey}}
+
 
 ###
 PUT {{host}}/users/249370d3-1c7b-4332-adc0-62756e278f04

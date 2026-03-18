@@ -2,6 +2,9 @@
 package v1handler
 
 import (
+	"net/http"
+	"strconv"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
@@ -20,6 +23,113 @@ func NewUserHandler(userService v1service.IUserService) *UserHandler {
 	return &UserHandler{
 		userService: userService,
 	}
+}
+
+func (h *UserHandler) ListUsers(c *gin.Context) {
+
+	// query params
+	limitStr := c.DefaultQuery("limit", "10")
+	offsetStr := c.DefaultQuery("offset", "0")
+	search := c.Query("search")
+
+	limit, _ := strconv.Atoi(limitStr)
+	offset, _ := strconv.Atoi(offsetStr)
+
+	var searchPtr *string
+	if search != "" {
+		searchPtr = &search
+	}
+
+	users, total, err := h.userService.ListUsers(
+		c,
+		int32(limit),
+		int32(offset),
+		searchPtr,
+	)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	resp := mapper.ToUserResponseList(users)
+
+	// ✅ tính page từ offset
+	page := int32(1)
+	if limit > 0 {
+		page = int32(offset/int(limit) + 1)
+	}
+
+	// ✅ dùng PaginationResponse
+	result := utils.NewPaginationResponse(
+		resp,
+		page,
+		int32(limit),
+		int32(total),
+	)
+
+	c.JSON(http.StatusOK, result)
+}
+
+func (h *UserHandler) RestoreUser(c *gin.Context) {
+
+	traceID, _ := c.Get("trace_id")
+
+	log.Info().
+		Str("trace_id", traceID.(string)).
+		Msg("restore user request")
+
+	uuidStr := c.Param("uuid")
+
+	id, err := uuid.Parse(uuidStr)
+	if err != nil {
+		utils.ResponseError(c, utils.NewError("invalid uuid", utils.ErrCodeBadRequest))
+		return
+	}
+
+	user, err := h.userService.RestoreUser(
+		c.Request.Context(),
+		id,
+	)
+
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	resp := mapper.ToUserResponse(user)
+
+	utils.ResponseSuccess(c, 200, "user restore", resp)
+}
+
+func (h *UserHandler) DeleteUserSoft(c *gin.Context) {
+
+	traceID, _ := c.Get("trace_id")
+
+	log.Info().
+		Str("trace_id", traceID.(string)).
+		Msg("soft delete user request")
+
+	uuidStr := c.Param("uuid")
+
+	id, err := uuid.Parse(uuidStr)
+	if err != nil {
+		utils.ResponseError(c, utils.NewError("invalid uuid", utils.ErrCodeBadRequest))
+		return
+	}
+
+	user, err := h.userService.DeleteUserSoft(
+		c.Request.Context(),
+		id,
+	)
+
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	resp := mapper.ToUserResponse(user)
+
+	utils.ResponseSuccess(c, 200, "user deleted", resp)
 }
 
 func (h *UserHandler) UpdateUser(c *gin.Context) {
@@ -56,7 +166,7 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 
 	resp := mapper.ToUserResponse(user)
 
-	utils.ResponseSuccess(c, 200, resp)
+	utils.ResponseSuccess(c, 200, "user updated", resp)
 }
 
 func (h *UserHandler) GetUserByUUID(c *gin.Context) {
@@ -81,7 +191,7 @@ func (h *UserHandler) GetUserByUUID(c *gin.Context) {
 
 	resp := mapper.ToUserResponse(user)
 
-	utils.ResponseSuccess(c, 200, resp)
+	utils.ResponseSuccess(c, 200, "user updated", resp)
 }
 
 func (h *UserHandler) CreateUser(c *gin.Context) {
@@ -108,5 +218,5 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 
 	resp := mapper.ToUserResponse(user)
 
-	utils.ResponseSuccess(c, 200, resp)
+	utils.ResponseSuccess(c, 200, "user updated", resp)
 }

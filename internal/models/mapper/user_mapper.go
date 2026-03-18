@@ -44,3 +44,11 @@ func ToUserResponse(u db.User) v1dto.UserResponse {
 		CreatedAt: u.UserCreatedAt.Format("2006-01-02 15:04:05"),
 	}
 }
+
+func ToUserResponseList(users []db.User) []v1dto.UserResponse {
+	res := make([]v1dto.UserResponse, 0, len(users))
+	for _, u := range users {
+		res = append(res, ToUserResponse(u))
+	}
+	return res
+}

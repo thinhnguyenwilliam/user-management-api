@@ -72,11 +72,12 @@ func (mr *MockQuerierMockRecorder) DeleteUserHard(ctx, userUuid any) *gomock.Cal
 }
 
 // DeleteUserSoft mocks base method.
-func (m *MockQuerier) DeleteUserSoft(ctx context.Context, userUuid uuid.UUID) error {
+func (m *MockQuerier) DeleteUserSoft(ctx context.Context, userUuid uuid.UUID) (db.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteUserSoft", ctx, userUuid)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(db.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // DeleteUserSoft indicates an expected call of DeleteUserSoft.
@@ -128,6 +129,21 @@ func (m *MockQuerier) ListUsers(ctx context.Context, arg db.ListUsersParams) ([]
 func (mr *MockQuerierMockRecorder) ListUsers(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUsers", reflect.TypeOf((*MockQuerier)(nil).ListUsers), ctx, arg)
+}
+
+// RestoreUser mocks base method.
+func (m *MockQuerier) RestoreUser(ctx context.Context, userUuid uuid.UUID) (db.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RestoreUser", ctx, userUuid)
+	ret0, _ := ret[0].(db.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RestoreUser indicates an expected call of RestoreUser.
+func (mr *MockQuerierMockRecorder) RestoreUser(ctx, userUuid any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RestoreUser", reflect.TypeOf((*MockQuerier)(nil).RestoreUser), ctx, userUuid)
 }
 
 // UpdateUser mocks base method.

@@ -28,6 +28,98 @@ func NewUserService(userRepo repository.IUserRepository) IUserService {
 	}
 }
 
+func (s *userService) CountUsers(ctx context.Context, deleted *bool, search *string) (int64, error) {
+
+	// ✅ normalize search
+	if search != nil && *search == "" {
+		search = nil
+	}
+
+	count, err := s.userRepo.CountUsers(ctx, db.CountUsersParams{
+		Deleted: deleted,
+		Search:  search,
+	})
+
+	if err != nil {
+		return 0, utils.WrapError("failed to count users", utils.ErrCodeDatabase, err)
+	}
+
+	return count, nil
+}
+
+func (s *userService) ListUsers(ctx context.Context, limit, offset int32, search *string) ([]db.User, int64, error) {
+
+	// validate
+	if limit <= 0 || limit > 100 {
+		limit = 10
+	}
+
+	users, err := s.userRepo.ListUsers(ctx, db.ListUsersOrderByCreatedAtDescParams{
+		Limit:  limit,
+		Offset: offset,
+		Search: search,
+	})
+
+	if err != nil {
+		return nil, 0, utils.WrapError("failed to list users", utils.ErrCodeDatabase, err)
+	}
+
+	total, err := s.userRepo.CountUsers(ctx, db.CountUsersParams{
+		Search: search,
+	})
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return users, total, nil
+}
+
+func (s *userService) DeleteUserSoft(
+	ctx context.Context,
+	id uuid.UUID,
+) (db.User, error) {
+
+	traceID := ctx.Value(middleware.TraceIDKey).(string)
+
+	log.Info().
+		Str("trace_id", traceID).
+		Msg("delete user request")
+
+	user, err := s.userRepo.DeleteSoft(ctx, id)
+	if err != nil {
+		return db.User{}, utils.WrapError(
+			"failed to delete user",
+			utils.ErrCodeDatabase,
+			err,
+		)
+	}
+
+	return user, nil
+}
+
+func (s *userService) RestoreUser(
+	ctx context.Context,
+	id uuid.UUID,
+) (db.User, error) {
+
+	traceID := ctx.Value(middleware.TraceIDKey).(string)
+
+	log.Info().
+		Str("trace_id", traceID).
+		Msg("restore user request")
+
+	user, err := s.userRepo.Restore(ctx, id)
+	if err != nil {
+		return db.User{}, utils.WrapError(
+			"failed to restore user",
+			utils.ErrCodeDatabase,
+			err,
+		)
+	}
+
+	return user, nil
+}
+
 func (s *userService) UpdateUser(
 	ctx context.Context,
 	id uuid.UUID,

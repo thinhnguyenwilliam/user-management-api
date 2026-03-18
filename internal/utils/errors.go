@@ -108,9 +108,32 @@ func ResponseError(ctx *gin.Context, err error) {
 	ctx.JSON(httpStatusFromCode(appErr.Code), response)
 }
 
-func ResponseSuccess(ctx *gin.Context, status int, data any) {
-	ctx.JSON(status, gin.H{
-		"success": true,
-		"data":    data,
+type APIResponse struct {
+	Status  string      `json:"status"`
+	Message string      `json:"message,omitempty"`
+	Data    any         `json:"data,omitempty"`
+	Meta    interface{} `json:"meta,omitempty"`
+}
+
+func ResponseSuccess(ctx *gin.Context, status int, message string, data ...any) {
+
+	resp := APIResponse{
+		Status:  "success",
+		Message: message,
+	}
+
+	if len(data) > 0 && data[0] != nil {
+		resp.Data = data[0]
+	}
+
+	ctx.JSON(status, resp)
+}
+
+func ResponseSuccessWithMeta(ctx *gin.Context, status int, message string, data any, meta any) {
+	ctx.JSON(status, APIResponse{
+		Status:  "success",
+		Message: message,
+		Data:    data,
+		Meta:    meta,
 	})
 }

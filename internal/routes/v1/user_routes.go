@@ -19,8 +19,11 @@ func NewUserRoutes(userHandler *v1handler.UserHandler) *UserRoutes {
 func (r *UserRoutes) Register(rg *gin.RouterGroup) {
 	userGroup := rg.Group("/users")
 	{
+		userGroup.GET("", r.userHandler.ListUsers)
 		userGroup.POST("/", r.userHandler.CreateUser)
 		userGroup.GET("/:uuid", r.userHandler.GetUserByUUID)
 		userGroup.PUT("/:uuid", r.userHandler.UpdateUser)
+		userGroup.DELETE("/:uuid", r.userHandler.DeleteUserSoft)
+		userGroup.PATCH("/:uuid/restore", r.userHandler.RestoreUser)
 	}
 }

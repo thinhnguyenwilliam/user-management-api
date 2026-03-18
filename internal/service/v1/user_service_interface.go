@@ -10,6 +10,8 @@ import (
 )
 
 type IUserService interface {
+	CountUsers(ctx context.Context, deleted *bool, search *string) (int64, error)
+	ListUsers(ctx context.Context, limit, offset int32, search *string) ([]db.User, int64, error)
 	CreateUser(ctx context.Context, req v1dto.CreateUserRequest) (db.User, error)
 	GetUserByUUID(ctx context.Context, uuid string) (db.User, error)
 	UpdateUser(
@@ -17,4 +19,7 @@ type IUserService interface {
 		id uuid.UUID,
 		req v1dto.UpdateUserRequest,
 	) (db.User, error)
+
+	DeleteUserSoft(ctx context.Context, id uuid.UUID) (db.User, error)
+	RestoreUser(ctx context.Context, id uuid.UUID) (db.User, error)
 }

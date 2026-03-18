@@ -34,6 +34,33 @@ ORDER BY user_created_at DESC
 LIMIT $1
 OFFSET $2;
 
+-- name: ListUsersOrderByCreatedAtDesc :many
+SELECT *
+FROM users
+WHERE user_deleted_at IS NULL
+AND (
+    sqlc.narg(search)::text IS NULL
+    OR sqlc.narg(search)::text = ''
+    OR user_email ILIKE '%' || sqlc.narg(search)::text || '%'
+    OR user_fullname ILIKE '%' || sqlc.narg(search)::text || '%'
+)
+ORDER BY user_created_at DESC
+LIMIT $1 OFFSET $2;
+
+-- name: CountUsers :one
+SELECT count(*)
+FROM users
+WHERE (
+    sqlc.narg(deleted)::bool IS NULL
+    OR (sqlc.narg(deleted)::bool = TRUE AND user_deleted_at IS NOT NULL)
+    OR (sqlc.narg(deleted)::bool = FALSE AND user_deleted_at IS NULL)
+)
+AND (
+    sqlc.narg(search)::text IS NULL
+    OR sqlc.narg(search)::text = ''
+    OR user_email ILIKE '%' || sqlc.narg(search)::text || '%'
+    OR user_fullname ILIKE '%' || sqlc.narg(search)::text || '%'
+);
 
 -- name: UpdateUser :one
 UPDATE users
@@ -54,10 +81,20 @@ SET user_password = $2
 WHERE user_uuid = $1;
 
 
--- name: DeleteUserSoft :exec
+-- name: DeleteUserSoft :one
 UPDATE users
 SET user_deleted_at = NOW()
-WHERE user_uuid = $1;
+WHERE user_uuid = sqlc.arg(user_uuid)
+AND user_deleted_at IS NULL
+RETURNING *;
+
+
+-- name: RestoreUser :one
+UPDATE users
+SET user_deleted_at = NULL
+WHERE user_uuid = sqlc.arg(user_uuid)
+AND user_deleted_at IS NOT NULL
+RETURNING *;
 
 
 -- name: DeleteUserHard :exec
