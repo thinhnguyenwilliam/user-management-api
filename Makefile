@@ -65,4 +65,4 @@ clean:
 rate-limit:
 	hey -n 50 -c 20 \
 		-H "X-API-Key: $(API_KEY)" \
-		$(HOST)/users/1772594263538205928
+		$(HOST)/users?limit=10&offset=0&search=Nguyen&sort=created_at&order=desc

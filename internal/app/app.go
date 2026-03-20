@@ -19,6 +19,7 @@ import (
 	"github.com/thinhnguyenwilliam/user-management-api/internal/middleware"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/routes"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/validation"
+	"github.com/thinhnguyenwilliam/user-management-api/pkg/rediscache"
 )
 
 type Module interface {
@@ -42,13 +43,10 @@ func NewApplication(cfg *config.Config, pool *pgxpool.Pool) (*Application, error
 	}
 
 	// 1️⃣ Init Redis
-	rdb, err := cache.NewRedisClient(cfg.Redis)
-	if err != nil {
-		return nil, err
-	}
+	rdb, _ := cache.NewRedisClient(cfg.Redis)
+	cacheService := rediscache.New(rdb)
 	log.Println("Redis Addr:", cfg.Redis.Addr)
 	log.Println("Redis Pass:", cfg.Redis.Password)
-	_ = rdb
 
 	// 2️⃣ Init RabbitMQ
 	conn, err := amqp091.Dial(cfg.RabbitMQ.URL)
@@ -79,7 +77,7 @@ func NewApplication(cfg *config.Config, pool *pgxpool.Pool) (*Application, error
 	store := sqlc.New(pool)
 	// Load modules (inject dependencies properly)
 	modules := []Module{
-		NewUserModule(store),
+		NewUserModule(store, pool, cacheService),
 	}
 	routeList := collectRoutes(modules)
 	routes.RegisterRoutes(r, middlewares, routeList...)

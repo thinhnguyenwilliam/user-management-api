@@ -28,25 +28,6 @@ func NewUserService(userRepo repository.IUserRepository) IUserService {
 	}
 }
 
-func (s *userService) CountUsers(ctx context.Context, deleted *bool, search *string) (int64, error) {
-
-	// ✅ normalize search
-	if search != nil && *search == "" {
-		search = nil
-	}
-
-	count, err := s.userRepo.CountUsers(ctx, db.CountUsersParams{
-		Deleted: deleted,
-		Search:  search,
-	})
-
-	if err != nil {
-		return 0, utils.WrapError("failed to count users", utils.ErrCodeDatabase, err)
-	}
-
-	return count, nil
-}
-
 func (s *userService) ListUsers(ctx context.Context, limit, offset int32, search *string) ([]db.User, int64, error) {
 
 	// validate
@@ -72,6 +53,25 @@ func (s *userService) ListUsers(ctx context.Context, limit, offset int32, search
 	}
 
 	return users, total, nil
+}
+
+func (s *userService) CountUsers(ctx context.Context, deleted *bool, search *string) (int64, error) {
+
+	// ✅ normalize search
+	if search != nil && *search == "" {
+		search = nil
+	}
+
+	count, err := s.userRepo.CountUsers(ctx, db.CountUsersParams{
+		Deleted: deleted,
+		Search:  search,
+	})
+
+	if err != nil {
+		return 0, utils.WrapError("failed to count users", utils.ErrCodeDatabase, err)
+	}
+
+	return count, nil
 }
 
 func (s *userService) DeleteUserSoft(
