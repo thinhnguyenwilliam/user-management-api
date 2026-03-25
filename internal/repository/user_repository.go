@@ -3,9 +3,12 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/jackc/pgx/v5"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -31,6 +34,38 @@ func NewUserRepository(
 		pool:  pool,
 		cache: cache,
 	}
+}
+
+func (r *userRepository) GetUserByEmail(ctx context.Context, email string) (*db.User, error) {
+	email = strings.ToLower(strings.TrimSpace(email))
+	cacheKey := "user:email:" + email
+
+	// 1. get cache
+	var cached db.User
+	err := r.cache.Get(ctx, cacheKey, &cached)
+	if err == nil {
+		if cached.UserUuid != uuid.Nil {
+			return &cached, nil
+		}
+		return nil, nil // 👈 cache says "not found"
+	}
+
+	// 2. fallback DB
+	user, err := r.q.GetUserByEmail(ctx, email)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			_ = r.cache.Set(ctx, cacheKey, db.User{}, 1*time.Minute)
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	// 3. set cache
+	if err := r.cache.Set(ctx, cacheKey, user, 5*time.Minute); err != nil {
+		log.Warn().Err(err).Msg("failed to set cache")
+	}
+
+	return &user, nil
 }
 
 func buildSearchKey(s *string) string {

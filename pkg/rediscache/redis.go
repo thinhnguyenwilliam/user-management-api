@@ -44,6 +44,9 @@ func (r *redisCacheService) DeleteByPattern(ctx context.Context, pattern string)
 func (r *redisCacheService) Get(ctx context.Context, key string, dest any) error {
 	val, err := r.rdb.Get(ctx, key).Result()
 	if err != nil {
+		if err == redis.Nil {
+			return err // cache miss
+		}
 		return err
 	}
 

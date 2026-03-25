@@ -6,6 +6,9 @@
 # docker logs redis_cache
 # http://192.168.1.8:5540
 # redis://:secret@redis:6379/0  or   redis://:secret@localhost:6379/0
+# docker exec -it redis_cache redis-cli -a secret
+# KEYS *
+# FLUSHALL: clear cache
 
 services:
   redis:

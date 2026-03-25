@@ -3,6 +3,17 @@
 @apiKey = william-hehe
 @uuid = 249370d3-1c7b-4332-adc0-62756e278f04
 
+### Login
+POST {{host}}/auth/login
+Content-Type: application/json
+X-API-Key: {{apiKey}}
+
+{
+  "email": "nguyenvana71@example.com",
+  "password": "123456"
+}
+
+
 ###
 GET {{host}}/users?limit=10&offset=0&search=Nguyen&sort=created_at&order=desc
 X-API-Key: {{apiKey}}
@@ -33,8 +44,8 @@ Content-Type: application/json
 X-API-Key: {{apiKey}}
 
 {
-  "fullname": "Nguyen Van A 6",
-  "email": "nguyenvana6@example.com",
+  "fullname": "Nguyen Van A 8",
+  "email": "nguyenvana8@example.com",
   "password": "123456",
   "age": 25
 }

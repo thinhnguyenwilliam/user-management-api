@@ -78,6 +78,7 @@ func NewApplication(cfg *config.Config, pool *pgxpool.Pool) (*Application, error
 	// Load modules (inject dependencies properly)
 	modules := []Module{
 		NewUserModule(store, pool, cacheService),
+		NewAuthModule(store, pool, cacheService),
 	}
 	routeList := collectRoutes(modules)
 	routes.RegisterRoutes(r, middlewares, routeList...)
