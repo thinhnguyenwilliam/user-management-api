@@ -9,7 +9,7 @@ Content-Type: application/json
 X-API-Key: {{apiKey}}
 
 {
-  "email": "nguyenvana71@example.com",
+  "email": "nguyenvana7@example.com",
   "password": "123456"
 }
 

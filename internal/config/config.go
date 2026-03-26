@@ -7,6 +7,11 @@ import (
 	"github.com/spf13/viper"
 )
 
+type JWTConfig struct {
+	JWTSigningKey string
+	JWTEncryptKey string
+}
+
 type DBConfig struct {
 	Host     string `mapstructure:"DB_HOST"`
 	User     string `mapstructure:"DB_USER"`

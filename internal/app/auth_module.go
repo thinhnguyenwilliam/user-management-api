@@ -29,7 +29,10 @@ func NewAuthModule(
 
 	// 2. Token service (🔥 bạn đang thiếu cái này)
 	// tokenService := auth.NewJWTService(cfg.JWT.Secret)
-	tokenService := auth.NewJWTService("your-secret-key")
+	tokenService := auth.NewJWTService(
+		"your-signing-secret",
+		[]byte("12345678901234567890123456789012"), // 32 bytes cho AES-256
+	)
 
 	// 3. Service
 	authService := v1service.NewAuthService(userRepo, tokenService)
