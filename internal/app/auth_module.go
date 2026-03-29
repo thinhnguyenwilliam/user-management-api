@@ -22,25 +22,12 @@ func NewAuthModule(
 	store *db.Queries,
 	pool *pgxpool.Pool,
 	cache rediscache.Cache,
+	tokenService auth.ITokenService,
 ) *AuthModule {
 
-	// 1. Repo
 	userRepo := repository.NewUserRepository(store, pool, cache)
-
-	// 2. Token service (🔥 bạn đang thiếu cái này)
-	// tokenService := auth.NewJWTService(cfg.JWT.Secret)
-	tokenService := auth.NewJWTService(
-		"your-signing-secret",
-		[]byte("12345678901234567890123456789012"), // 32 bytes cho AES-256
-	)
-
-	// 3. Service
 	authService := v1service.NewAuthService(userRepo, tokenService)
-
-	// 4. Handler
 	authHandler := v1handler.NewAuthHandler(authService)
-
-	// 5. Routes
 	authRoutes := v1routes.NewAuthRoutes(authHandler)
 
 	return &AuthModule{
@@ -48,6 +35,12 @@ func NewAuthModule(
 	}
 }
 
-func (m *AuthModule) Route() routes.Route {
-	return m.authRoutes
+func (m *AuthModule) PublicRoutes() []routes.Route {
+	return []routes.Route{
+		m.authRoutes, // ✅ dùng lại
+	}
+}
+
+func (m *AuthModule) ProtectedRoutes() []routes.Route {
+	return nil
 }

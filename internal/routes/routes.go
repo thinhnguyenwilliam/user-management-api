@@ -4,6 +4,8 @@ package routes
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
+	"github.com/thinhnguyenwilliam/user-management-api/internal/middleware"
+	"github.com/thinhnguyenwilliam/user-management-api/pkg/auth"
 )
 
 type Route interface {
@@ -13,17 +15,26 @@ type Route interface {
 func RegisterRoutes(
 	r *gin.Engine,
 	middlewares []gin.HandlerFunc,
-	routes ...Route,
+	tokenService auth.ITokenService, // 👈 thêm dòng này
+	publicRoutes []Route,
+	protectedRoutes []Route,
 ) {
 	api := r.Group("/api/v1")
 
-	// Apply all middlewares to api/v1
-	if len(middlewares) > 0 {
-		api.Use(middlewares...)
+	// public group
+	public := api.Group("")
+	for _, route := range publicRoutes {
+		route.Register(public)
 	}
 
-	for _, route := range routes {
-		route.Register(api)
+	// protected group
+	protected := api.Group("")
+	if len(middlewares) > 0 {
+		protected.Use(middlewares...)
+	}
+	protected.Use(middleware.AuthMiddleware(tokenService))
+	for _, route := range protectedRoutes {
+		route.Register(protected)
 	}
 
 	r.NoRoute(func(c *gin.Context) {

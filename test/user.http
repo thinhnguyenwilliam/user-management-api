@@ -2,6 +2,7 @@
 @host = http://localhost:8086/api/v1
 @apiKey = william-hehe
 @uuid = 249370d3-1c7b-4332-adc0-62756e278f04
+@access_token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoibVFFRDlXeTZJenlyWFB4NTk1dXN4dDFGSE03MFNNSjIwcGV1STV2ZCt6a1VnbzE0ejUzMUFYZU50aCt2dmQrdkF1anpNRXA5TVg1TW9LaitCb3RaZloyLzJFbG9JU3l0b1BuUFhjS1JuZ1pRanlkYmxvaDU0WjlRY0JZRm8yMEdwWUpWY0hCMkpOMUxFNHNTc1d2enI1aUxqQzRCbUI4T0REQkRRaEptT2NNPSIsImlzcyI6InVzZXItbWFuYWdlbWVudC1hcGkiLCJzdWIiOiIzMDQ3M2I0NS0xOTUzLTRkYmYtYTI3Yy02ZDBlMzZkNzY1NmIiLCJleHAiOjE3NzQ3NTY1OTcsImlhdCI6MTc3NDc1NTY5NywianRpIjoiOWFiOGYxZWQtMGU3Yi00ZTQ0LWI5NzMtYzE1YTdkMzc1YmUyIn0.96QKAzubYdbaza2HYraISRJL9ml9Q8WmJxfzv1ZZWSY
 
 ### Login
 POST {{host}}/auth/login
@@ -17,6 +18,7 @@ X-API-Key: {{apiKey}}
 ###
 GET {{host}}/users?limit=10&offset=0&search=Nguyen&sort=created_at&order=desc
 X-API-Key: {{apiKey}}
+Authorization: Bearer {{access_token}}
 
 
 ###

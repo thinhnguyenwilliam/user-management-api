@@ -19,11 +19,13 @@ import (
 	"github.com/thinhnguyenwilliam/user-management-api/internal/middleware"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/routes"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/validation"
+	"github.com/thinhnguyenwilliam/user-management-api/pkg/auth"
 	"github.com/thinhnguyenwilliam/user-management-api/pkg/rediscache"
 )
 
 type Module interface {
-	Route() routes.Route
+	PublicRoutes() []routes.Route
+	ProtectedRoutes() []routes.Route
 }
 
 type Application struct {
@@ -37,34 +39,31 @@ type Application struct {
 func NewApplication(cfg *config.Config, pool *pgxpool.Pool) (*Application, error) {
 	validateConfig(cfg)
 
-	// ✅ Init validation
 	if err := validation.InitValidation(); err != nil {
 		return nil, err
 	}
 
-	// 1️⃣ Init Redis
+	tokenService := auth.NewJWTService(
+		"your-signing-secret",
+		[]byte("12345678901234567890123456789012"),
+	)
+
+	// Redis
 	rdb, _ := cache.NewRedisClient(cfg.Redis)
 	cacheService := rediscache.New(rdb)
-	log.Println("Redis Addr:", cfg.Redis.Addr)
-	log.Println("Redis Pass:", cfg.Redis.Password)
 
-	// 2️⃣ Init RabbitMQ
+	// RabbitMQ
 	conn, err := amqp091.Dial(cfg.RabbitMQ.URL)
 	if err != nil {
 		return nil, err
 	}
-	log.Println("Connected to RabbitMQ")
 
-	// 3️⃣ Init Gin
+	// Gin
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
 
 	// Middlewares
-	rateLimiter := middleware.NewRateLimiter(
-		5,             // 5 requests/sec
-		15,            // burst
-		3*time.Minute, // client TTL
-	)
+	rateLimiter := middleware.NewRateLimiter(5, 15, 3*time.Minute)
 
 	middlewares := []gin.HandlerFunc{
 		middleware.Recovery(),
@@ -75,13 +74,30 @@ func NewApplication(cfg *config.Config, pool *pgxpool.Pool) (*Application, error
 	}
 
 	store := sqlc.New(pool)
-	// Load modules (inject dependencies properly)
+
+	// ✅ modules
 	modules := []Module{
 		NewUserModule(store, pool, cacheService),
-		NewAuthModule(store, pool, cacheService),
+		NewAuthModule(store, pool, cacheService, tokenService),
 	}
-	routeList := collectRoutes(modules)
-	routes.RegisterRoutes(r, middlewares, routeList...)
+
+	// ✅ collect routes đúng cách
+	var publicRoutes []routes.Route
+	var protectedRoutes []routes.Route
+
+	for _, m := range modules {
+		publicRoutes = append(publicRoutes, m.PublicRoutes()...)
+		protectedRoutes = append(protectedRoutes, m.ProtectedRoutes()...)
+	}
+
+	// ✅ register
+	routes.RegisterRoutes(
+		r,
+		middlewares,
+		tokenService,
+		publicRoutes,
+		protectedRoutes,
+	)
 
 	return &Application{
 		config:     cfg,
@@ -102,16 +118,6 @@ func validateConfig(cfg *config.Config) {
 	if cfg.RabbitMQ.URL == "" {
 		log.Fatal("RABBITMQ_URL is required")
 	}
-}
-
-func collectRoutes(modules []Module) []routes.Route {
-	var result []routes.Route
-
-	for _, module := range modules {
-		result = append(result, module.Route())
-	}
-
-	return result
 }
 
 func (a *Application) Run() error {

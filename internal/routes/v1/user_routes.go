@@ -1,4 +1,4 @@
-// user-management-api/internal/routes/user_routes.go
+// user-management-api/internal/routes/v1/user_routes.go
 package v1routes
 
 import (
