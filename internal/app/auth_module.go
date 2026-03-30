@@ -26,7 +26,7 @@ func NewAuthModule(
 ) *AuthModule {
 
 	userRepo := repository.NewUserRepository(store, pool, cache)
-	authService := v1service.NewAuthService(userRepo, tokenService)
+	authService := v1service.NewAuthService(userRepo, tokenService, cache)
 	authHandler := v1handler.NewAuthHandler(authService)
 	authRoutes := v1routes.NewAuthRoutes(authHandler)
 

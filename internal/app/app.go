@@ -43,14 +43,15 @@ func NewApplication(cfg *config.Config, pool *pgxpool.Pool) (*Application, error
 		return nil, err
 	}
 
-	tokenService := auth.NewJWTService(
-		"your-signing-secret",
-		[]byte("12345678901234567890123456789012"),
-	)
-
 	// Redis
 	rdb, _ := cache.NewRedisClient(cfg.Redis)
 	cacheService := rediscache.New(rdb)
+
+	tokenService := auth.NewJWTService(
+		"your-signing-secret",
+		[]byte("12345678901234567890123456789012"),
+		cacheService,
+	)
 
 	// RabbitMQ
 	conn, err := amqp091.Dial(cfg.RabbitMQ.URL)

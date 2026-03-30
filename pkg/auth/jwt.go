@@ -2,27 +2,32 @@
 package auth
 
 import (
+	"context"
 	"encoding/json"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/utils"
+	"github.com/thinhnguyenwilliam/user-management-api/pkg/rediscache"
 )
 
 const (
-	AccessTokenTTL = 15 * time.Minute
+	AccessTokenTTL  = 15 * time.Minute
+	RefreshTokenTTL = 7 * 24 * time.Hour
 )
 
 type JWTService struct {
 	signingKey string
 	encryptKey []byte
+	cache      rediscache.Cache
 }
 
-func NewJWTService(signingKey string, encryptKey []byte) ITokenService {
+func NewJWTService(signingKey string, encryptKey []byte, cache rediscache.Cache) ITokenService {
 	return &JWTService{
 		signingKey: signingKey,
 		encryptKey: encryptKey,
+		cache:      cache,
 	}
 }
 
@@ -35,6 +40,56 @@ type TokenPayload struct {
 type Claims struct {
 	Data string `json:"data"` // encrypted payload
 	jwt.RegisteredClaims
+}
+
+type RefreshClaims struct {
+	UserID string `json:"user_id"`
+	jwt.RegisteredClaims
+}
+
+func (js *JWTService) GenerateRefreshToken(userID string) (string, string, error) {
+	jti := uuid.NewString()
+
+	claims := RefreshClaims{
+		UserID: userID,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ID:        jti,
+			Subject:   userID,
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(RefreshTokenTTL)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			Issuer:    "user-management-api",
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	tokenStr, err := token.SignedString([]byte(js.signingKey))
+	if err != nil {
+		return "", "", err
+	}
+
+	// 🔥 LƯU REDIS NGAY TẠI ĐÂY
+	key := "refresh_token:" + jti
+	err = js.cache.Set(context.Background(), key, userID, RefreshTokenTTL)
+	if err != nil {
+		return "", "", err
+	}
+
+	return tokenStr, jti, nil
+}
+
+func (js *JWTService) ParseRefreshToken(tokenStr string) (*RefreshClaims, error) {
+	var claims RefreshClaims
+
+	token, err := jwt.ParseWithClaims(tokenStr, &claims, func(token *jwt.Token) (interface{}, error) {
+		return []byte(js.signingKey), nil
+	})
+
+	if err != nil || !token.Valid {
+		return nil, err
+	}
+
+	return &claims, nil
 }
 
 // 🔐 Generate Access Token
