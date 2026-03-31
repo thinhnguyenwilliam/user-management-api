@@ -18,6 +18,24 @@ func NewAuthHandler(authService v1service.IAuthService) *AuthHandler {
 	}
 }
 
+func (h *AuthHandler) RefreshToken(c *gin.Context) {
+	var req v1dto.RefreshTokenRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx := c.Request.Context()
+
+	res, err := h.authService.RefreshToken(ctx, req.RefreshToken)
+	if err != nil {
+		c.JSON(401, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(200, res)
+}
+
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req v1dto.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

@@ -20,5 +20,6 @@ func (r *AuthRoutes) Register(rg *gin.RouterGroup) {
 	authGroup := rg.Group("/auth")
 	{
 		authGroup.POST("/login", r.authHandler.Login)
+		authGroup.POST("/refresh-token", r.authHandler.RefreshToken)
 	}
 }

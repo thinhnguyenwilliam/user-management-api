@@ -31,16 +31,6 @@ func NewAuthService(
 	}
 }
 
-func (s *authService) Logout(ctx context.Context, refreshToken string) error {
-	claims, err := s.tokenService.ParseRefreshToken(refreshToken)
-	if err != nil {
-		return err
-	}
-
-	key := "refresh_token:" + claims.ID
-	return s.cache.Delete(ctx, key)
-}
-
 func (s *authService) RefreshToken(ctx context.Context, refreshToken string) (*v1dto.LoginResponse, error) {
 	// 1. parse JWT
 	claims, err := s.tokenService.ParseRefreshToken(refreshToken)
@@ -82,6 +72,16 @@ func (s *authService) RefreshToken(ctx context.Context, refreshToken string) (*v
 		AccessToken:  accessToken,
 		RefreshToken: newRefreshToken,
 	}, nil
+}
+
+func (s *authService) Logout(ctx context.Context, refreshToken string) error {
+	claims, err := s.tokenService.ParseRefreshToken(refreshToken)
+	if err != nil {
+		return err
+	}
+
+	key := "refresh_token:" + claims.ID
+	return s.cache.Delete(ctx, key)
 }
 
 func (s *authService) Login(ctx context.Context, req v1dto.LoginRequest) (*v1dto.LoginResponse, error) {
