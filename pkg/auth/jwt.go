@@ -31,6 +31,20 @@ func NewJWTService(signingKey string, encryptKey []byte, cache rediscache.Cache)
 	}
 }
 
+func (js *JWTService) ParseAccessTokenRaw(tokenStr string) (*jwt.RegisteredClaims, error) {
+	var claims jwt.RegisteredClaims
+
+	token, err := jwt.ParseWithClaims(tokenStr, &claims, func(token *jwt.Token) (interface{}, error) {
+		return []byte(js.signingKey), nil
+	})
+
+	if err != nil || !token.Valid {
+		return nil, err
+	}
+
+	return &claims, nil
+}
+
 type TokenPayload struct {
 	UserID string `json:"user_id"`
 	Role   string `json:"role"`

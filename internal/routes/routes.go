@@ -6,6 +6,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/middleware"
 	"github.com/thinhnguyenwilliam/user-management-api/pkg/auth"
+	"github.com/thinhnguyenwilliam/user-management-api/pkg/rediscache"
 )
 
 type Route interface {
@@ -18,6 +19,7 @@ func RegisterRoutes(
 	tokenService auth.ITokenService, // 👈 thêm dòng này
 	publicRoutes []Route,
 	protectedRoutes []Route,
+	cache rediscache.Cache,
 ) {
 	api := r.Group("/api/v1")
 
@@ -32,7 +34,7 @@ func RegisterRoutes(
 	if len(middlewares) > 0 {
 		protected.Use(middlewares...)
 	}
-	protected.Use(middleware.AuthMiddleware(tokenService))
+	protected.Use(middleware.AuthMiddleware(tokenService, cache))
 	for _, route := range protectedRoutes {
 		route.Register(protected)
 	}

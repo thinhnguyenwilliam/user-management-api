@@ -10,5 +10,5 @@ import (
 type IAuthService interface {
 	Login(ctx context.Context, req v1dto.LoginRequest) (*v1dto.LoginResponse, error)
 	RefreshToken(ctx context.Context, refreshToken string) (*v1dto.LoginResponse, error)
-	Logout(ctx context.Context, refreshToken string) error
+	Logout(ctx context.Context, refreshToken string, accessToken string) error
 }

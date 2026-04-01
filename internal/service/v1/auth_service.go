@@ -4,6 +4,7 @@ package v1service
 import (
 	"context"
 	"errors"
+	"time"
 
 	domain "github.com/thinhnguyenwilliam/user-management-api/internal/domain/user"
 	v1dto "github.com/thinhnguyenwilliam/user-management-api/internal/models/dto/v1"
@@ -29,6 +30,40 @@ func NewAuthService(
 		tokenService: tokenService,
 		cache:        cache,
 	}
+}
+
+func (s *authService) Logout(ctx context.Context, refreshToken string, accessToken string) error {
+	// 1. parse refresh token
+	refreshClaims, err := s.tokenService.ParseRefreshToken(refreshToken)
+	if err != nil {
+		return err
+	}
+
+	// 2. delete refresh token (như cũ)
+	refreshKey := "refresh_token:" + refreshClaims.ID
+	_ = s.cache.Delete(ctx, refreshKey)
+
+	// 3. parse access token
+	accessClaims, err := s.tokenService.ParseAccessTokenRaw(accessToken)
+	if err != nil {
+		return err
+	}
+
+	// 4. tính TTL còn lại
+	ttl := time.Until(accessClaims.ExpiresAt.Time)
+	if ttl <= 0 {
+		return nil // token sắp hết hạn rồi
+	}
+
+	// 5. add vào blacklist
+	blacklistKey := "blacklist_access_token:" + accessClaims.ID
+
+	err = s.cache.Set(ctx, blacklistKey, true, ttl)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *authService) RefreshToken(ctx context.Context, refreshToken string) (*v1dto.LoginResponse, error) {
@@ -72,16 +107,6 @@ func (s *authService) RefreshToken(ctx context.Context, refreshToken string) (*v
 		AccessToken:  accessToken,
 		RefreshToken: newRefreshToken,
 	}, nil
-}
-
-func (s *authService) Logout(ctx context.Context, refreshToken string) error {
-	claims, err := s.tokenService.ParseRefreshToken(refreshToken)
-	if err != nil {
-		return err
-	}
-
-	key := "refresh_token:" + claims.ID
-	return s.cache.Delete(ctx, key)
 }
 
 func (s *authService) Login(ctx context.Context, req v1dto.LoginRequest) (*v1dto.LoginResponse, error) {

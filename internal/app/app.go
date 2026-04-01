@@ -98,6 +98,7 @@ func NewApplication(cfg *config.Config, pool *pgxpool.Pool) (*Application, error
 		tokenService,
 		publicRoutes,
 		protectedRoutes,
+		cacheService,
 	)
 
 	return &Application{
