@@ -20,6 +20,7 @@ import (
 	"github.com/thinhnguyenwilliam/user-management-api/internal/routes"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/validation"
 	"github.com/thinhnguyenwilliam/user-management-api/pkg/auth"
+	"github.com/thinhnguyenwilliam/user-management-api/pkg/ratelimiter"
 	"github.com/thinhnguyenwilliam/user-management-api/pkg/rediscache"
 )
 
@@ -46,6 +47,7 @@ func NewApplication(cfg *config.Config, pool *pgxpool.Pool) (*Application, error
 	// Redis
 	rdb, _ := cache.NewRedisClient(cfg.Redis)
 	cacheService := rediscache.New(rdb)
+	rl := ratelimiter.NewRedisRateLimiter(rdb, 100, time.Minute)
 
 	tokenService := auth.NewJWTService(
 		"your-signing-secret",
@@ -64,14 +66,15 @@ func NewApplication(cfg *config.Config, pool *pgxpool.Pool) (*Application, error
 	r := gin.New()
 
 	// Middlewares
-	rateLimiter := middleware.NewRateLimiter(5, 15, 3*time.Minute)
+	//rateLimiter := middleware.NewRateLimiter(5, 15, 3*time.Minute)
 
 	middlewares := []gin.HandlerFunc{
 		middleware.Recovery(),
 		middleware.TraceID(),
 		middleware.LoggerMiddleware(),
 		middleware.ApiKeyMiddleware(cfg.ApiKey),
-		rateLimiter.Middleware(),
+		//rateLimiter.Middleware(),
+		middleware.RedisRateLimitMiddleware(rl),
 	}
 
 	store := sqlc.New(pool)
