@@ -9,6 +9,7 @@ import (
 )
 
 type IUserRepository interface {
+	UpdatePassword(ctx context.Context, userID string, password string) error
 	GetUserByEmail(ctx context.Context, email string) (*db.User, error)
 	ListUsersV2(ctx context.Context, in ListUsersInput) ([]db.User, error)
 	CountUsers(ctx context.Context, params db.CountUsersParams) (int64, error)

@@ -36,6 +36,27 @@ func NewUserRepository(
 	}
 }
 
+func (r *userRepository) UpdatePassword(ctx context.Context, userID string, password string) error {
+	uid, err := uuid.Parse(userID)
+	if err != nil {
+		return err
+	}
+
+	err = r.q.UpdateUserPassword(ctx, db.UpdateUserPasswordParams{
+		UserUuid:     uid,
+		UserPassword: password,
+	})
+	if err != nil {
+		return err
+	}
+
+	// 🔥 invalidate cache (QUAN TRỌNG)
+	cacheKey := "user:uuid:" + userID
+	_ = r.cache.Delete(ctx, cacheKey)
+
+	return nil
+}
+
 func (r *userRepository) GetUserByEmail(ctx context.Context, email string) (*db.User, error) {
 	email = strings.ToLower(strings.TrimSpace(email))
 	cacheKey := "user:email:" + email

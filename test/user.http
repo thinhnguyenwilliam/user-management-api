@@ -5,6 +5,25 @@
 @access_token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiOTg1Tmc4SDVaNVAySHRtcmtQSWZ6ZGlGem1abThZWE52VmJ0d29uOG45ZmRYR25FR2JxVUpDWitZTWtrTFAwZGxEK3JjTUR0NnhoRDVGZEFiNjJlbGhSSDBLaXdMWUNNV1NJMmlVY1BWQ013Qi9scFVad1piR0dKVkpmd1VKQnVOdUZkU1hnTXV2OFNjR0RlRkNibWp4eEFHYm44SExPbUFGOG9rcHVZeE40PSIsImlzcyI6InVzZXItbWFuYWdlbWVudC1hcGkiLCJzdWIiOiIzMDQ3M2I0NS0xOTUzLTRkYmYtYTI3Yy02ZDBlMzZkNzY1NmIiLCJleHAiOjE3NzUwMDI4NDIsImlhdCI6MTc3NTAwMTk0MiwianRpIjoiMTY1NDExZmItNGEwOC00ZjJjLWE3NDMtMTJhNzVmNjNmMjg2In0.NDjNj4haz51Yw6M4lwYQEUM_IYtn4Qw-wwaICeDq65A
 @refresh_token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMzA0NzNiNDUtMTk1My00ZGJmLWEyN2MtNmQwZTM2ZDc2NTZiIiwiaXNzIjoidXNlci1tYW5hZ2VtZW50LWFwaSIsInN1YiI6IjMwNDczYjQ1LTE5NTMtNGRiZi1hMjdjLTZkMGUzNmQ3NjU2YiIsImV4cCI6MTc3NTYwNjc0MiwiaWF0IjoxNzc1MDAxOTQyLCJqdGkiOiJjMTVlZGU5My02MWRhLTQyZDgtYjU1MC02NzI1YWQ3MjNiYTQifQ.RBveXnV_BgiM4koBDFmewnVT46h0lkyZChRbYAhl3o0
 
+
+### Reset Password
+POST {{host}}/auth/reset-password
+Content-Type: application/json
+
+{
+  "token": "d1fed867-27c0-40cb-abdf-c790cc735edf",
+  "new_password": "12345678"
+}
+
+
+### Forgot Password
+POST {{host}}/auth/forgot-password
+Content-Type: application/json
+
+{
+  "email": "nguyenvana7@example.com"
+}
+
 ###
 POST {{host}}/auth/logout
 Content-Type: application/json

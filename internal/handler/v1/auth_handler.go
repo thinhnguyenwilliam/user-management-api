@@ -19,6 +19,52 @@ func NewAuthHandler(authService v1service.IAuthService) *AuthHandler {
 	}
 }
 
+func (h *AuthHandler) ResetPassword(c *gin.Context) {
+	ip := c.ClientIP()
+	var req struct {
+		Token       string `json:"token" binding:"required"`
+		NewPassword string `json:"new_password" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx := c.Request.Context()
+
+	err := h.authService.ResetPassword(ctx, req.Token, req.NewPassword, ip)
+	if err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"message": "password reset successful",
+	})
+}
+
+func (h *AuthHandler) ForgotPassword(c *gin.Context) {
+	ip := c.ClientIP()
+	var req struct {
+		Email string `json:"email" binding:"required,email"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx := c.Request.Context()
+
+	_ = h.authService.ForgotPassword(ctx, req.Email, ip)
+
+	// ❗ luôn trả success để tránh lộ email
+	c.JSON(200, gin.H{
+		"message": "if email exists, reset link sent",
+	})
+}
+
 func (h *AuthHandler) Logout(c *gin.Context) {
 	var req v1dto.LogoutRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

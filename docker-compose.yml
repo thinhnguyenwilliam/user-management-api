@@ -47,6 +47,20 @@ services:
     networks:
       - backend-network
 
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    container_name: go-app
+    ports:
+      - "8086:8086"
+    depends_on:
+      - postgres
+    networks:
+      - backend-network
+
 volumes:
   postgres-data:
   pgadmin-data:

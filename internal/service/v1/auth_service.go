@@ -4,8 +4,11 @@ package v1service
 import (
 	"context"
 	"errors"
+	"fmt"
+	"log"
 	"time"
 
+	"github.com/google/uuid"
 	domain "github.com/thinhnguyenwilliam/user-management-api/internal/domain/user"
 	v1dto "github.com/thinhnguyenwilliam/user-management-api/internal/models/dto/v1"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/repository"
@@ -30,6 +33,87 @@ func NewAuthService(
 		tokenService: tokenService,
 		cache:        cache,
 	}
+}
+
+type ResetTokenData struct {
+	UserID   string `json:"user_id"`
+	IP       string `json:"ip"`
+	Attempts int    `json:"attempts"`
+}
+
+func (s *authService) ForgotPassword(ctx context.Context, email string, ip string) error {
+	user, err := s.userRepo.GetUserByEmail(ctx, email)
+	if err != nil || user == nil {
+		return nil // không leak info
+	}
+
+	token := uuid.NewString()
+
+	key := "reset_password:" + token
+
+	data := ResetTokenData{
+		UserID:   user.UserUuid.String(),
+		IP:       ip,
+		Attempts: 0,
+	}
+
+	err = s.cache.Set(ctx, key, data, 15*time.Minute)
+	if err != nil {
+		return err
+	}
+
+	resetLink := fmt.Sprintf("http://yourdomain.com/reset-password?token=%s", token)
+
+	log.Println("Reset link:", resetLink)
+
+	return nil
+}
+
+func (s *authService) ResetPassword(ctx context.Context, token string, newPassword string, ip string) error {
+	key := "reset_password:" + token
+
+	var data ResetTokenData
+	err := s.cache.Get(ctx, key, &data)
+	if err != nil {
+		return errors.New("invalid or expired token")
+	}
+
+	// 🔥 check IP (optional nhưng nên có)
+	if data.IP != ip {
+		return errors.New("invalid request source")
+	}
+
+	// 🔥 check attempt limit
+	if data.Attempts >= 3 {
+		_ = s.cache.Delete(ctx, key)
+		return errors.New("too many attempts")
+	}
+
+	// tăng attempts
+	data.Attempts++
+
+	// update lại Redis (giữ TTL cũ)
+	err = s.cache.Set(ctx, key, data, 15*time.Minute)
+	if err != nil {
+		return err
+	}
+
+	// hash password
+	hashed, err := utils.HashPassword(newPassword)
+	if err != nil {
+		return err
+	}
+
+	// update DB
+	err = s.userRepo.UpdatePassword(ctx, data.UserID, hashed)
+	if err != nil {
+		return err
+	}
+
+	// 🔥 delete token (one-time use)
+	_ = s.cache.Delete(ctx, key)
+
+	return nil
 }
 
 func (s *authService) Logout(ctx context.Context, refreshToken string, accessToken string) error {
