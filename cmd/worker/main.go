@@ -1,6 +1,4 @@
 // user-management-api/cmd/worker/main.go
-
-// user-management-api/cmd/worker/main.go
 package main
 
 import (

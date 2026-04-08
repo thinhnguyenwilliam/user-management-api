@@ -1,0 +1,48 @@
+# docker compose -f docker-compose.logging.yml up -d
+
+# user-management-api/docker-compose.logging.yml
+services:
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - backend-network
+
+  promtail:
+    image: grafana/promtail:2.9.0
+    container_name: promtail
+    volumes:
+      - ./internal/logs:/app/logs
+      # - /var/log:/var/log
+      # - /var/lib/docker/containers:/var/lib/docker/containers
+      - ./deploy/promtail/promtail-config.yml:/etc/promtail/config.yml
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      - loki
+    networks:
+      - backend-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+    volumes:
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - loki
+    networks:
+      - backend-network
+
+volumes:
+  grafana-data:
+
+networks:
+  backend-network:
+    external: true

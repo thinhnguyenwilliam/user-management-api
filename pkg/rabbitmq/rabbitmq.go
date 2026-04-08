@@ -151,7 +151,7 @@ func (r *rabbitMQService) Consume(
 				}
 
 				if err := handler(msg.Body); err != nil {
-					msg.Nack(false, true)
+					//msg.Nack(false, true)
 					continue
 				}
 
