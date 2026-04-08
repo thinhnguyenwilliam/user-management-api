@@ -79,6 +79,8 @@ func (s *authService) ForgotPassword(ctx context.Context, email string, ip strin
 			user.UserEmail,
 			resetLink,
 		),
+		Retry:    0,
+		MaxRetry: 3,
 	}
 
 	body, err := json.Marshal(msg)
