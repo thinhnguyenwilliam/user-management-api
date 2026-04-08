@@ -21,7 +21,7 @@ POST {{host}}/auth/forgot-password
 Content-Type: application/json
 
 {
-  "email": "nguyenvana7@example.com"
+  "email": "thinhproee@gmail.com"
 }
 
 ###
@@ -85,10 +85,10 @@ Content-Type: application/json
 X-API-Key: {{apiKey}}
 
 {
-  "fullname": "Nguyen Van A 8",
-  "email": "nguyenvana8@example.com",
+  "fullname": "Nguyen Truong Thinh",
+  "email": "thinhproee@gmail.com",
   "password": "123456",
-  "age": 25
+  "age": 29
 }
 
 

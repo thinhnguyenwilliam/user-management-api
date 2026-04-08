@@ -195,7 +195,7 @@ func (s *userService) CreateUser(
 	ctx context.Context,
 	req v1dto.CreateUserRequest,
 ) (db.User, error) {
-	traceID := ctx.Value(middleware.TraceIDKey).(string)
+	traceID, _ := ctx.Value(middleware.TraceIDKey).(string)
 
 	log.Info().
 		Str("trace_id", traceID).

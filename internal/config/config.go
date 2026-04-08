@@ -7,6 +7,14 @@ import (
 	"github.com/spf13/viper"
 )
 
+type MailTrapConfig struct {
+	MailProviderType string `mapstructure:"MAIL_PROVIDER_TYPE"`
+	MailSender       string `mapstructure:"MAILTRAP_MAIL_SENDER"`
+	NameSender       string `mapstructure:"MAILTRAP_NAME_SENDER"`
+	MailtrapURL      string `mapstructure:"MAILTRAP_URL"`
+	MailtrapAPIKey   string `mapstructure:"MAILTRAP_API_KEY"`
+}
+
 type JWTConfig struct {
 	JWTSigningKey string
 	JWTEncryptKey string
@@ -28,6 +36,7 @@ type Config struct {
 	DB          DBConfig       `mapstructure:",squash"`
 	Redis       RedisConfig    `mapstructure:",squash"`
 	RabbitMQ    RabbitMQConfig `mapstructure:",squash"`
+	MailTrap    MailTrapConfig `mapstructure:",squash"`
 }
 
 func LoadConfig() (*Config, error) {

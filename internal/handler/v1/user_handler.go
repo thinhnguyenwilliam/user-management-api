@@ -25,6 +25,43 @@ func NewUserHandler(userService v1service.IUserService) *UserHandler {
 	}
 }
 
+func GetString(c *gin.Context, key string) string {
+	v, ok := c.Get(key)
+	if !ok {
+		return ""
+	}
+	s, _ := v.(string)
+	return s
+}
+
+func (h *UserHandler) CreateUser(c *gin.Context) {
+	traceID := GetString(c, "trace_id")
+
+	log.Info().
+		Str("trace_id", traceID).
+		Msg("getting user request")
+
+	var req v1dto.CreateUserRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.ResponseError(c, utils.NewError("invalid request", utils.ErrCodeBadRequest))
+		return
+	}
+
+	user, err := h.userService.CreateUser(
+		c.Request.Context(),
+		req,
+	)
+
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	resp := mapper.ToUserResponse(user)
+
+	utils.ResponseSuccess(c, 200, "user updated", resp)
+}
+
 func (h *UserHandler) ListUsers(c *gin.Context) {
 
 	// query params
@@ -182,33 +219,6 @@ func (h *UserHandler) GetUserByUUID(c *gin.Context) {
 	user, err := h.userService.GetUserByUUID(
 		c.Request.Context(),
 		uuid,
-	)
-
-	if err != nil {
-		utils.ResponseError(c, err)
-		return
-	}
-
-	resp := mapper.ToUserResponse(user)
-
-	utils.ResponseSuccess(c, 200, "user updated", resp)
-}
-
-func (h *UserHandler) CreateUser(c *gin.Context) {
-	traceID, _ := c.Get("trace_id")
-	log.Info().
-		Str("trace_id", traceID.(string)).
-		Msg("getting user request")
-
-	var req v1dto.CreateUserRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		utils.ResponseError(c, utils.NewError("invalid request", utils.ErrCodeBadRequest))
-		return
-	}
-
-	user, err := h.userService.CreateUser(
-		c.Request.Context(),
-		req,
 	)
 
 	if err != nil {

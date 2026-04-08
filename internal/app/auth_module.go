@@ -9,6 +9,7 @@ import (
 	v1routes "github.com/thinhnguyenwilliam/user-management-api/internal/routes/v1"
 	v1service "github.com/thinhnguyenwilliam/user-management-api/internal/service/v1"
 	"github.com/thinhnguyenwilliam/user-management-api/pkg/auth"
+	"github.com/thinhnguyenwilliam/user-management-api/pkg/rabbitmq"
 	"github.com/thinhnguyenwilliam/user-management-api/pkg/rediscache"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -23,10 +24,11 @@ func NewAuthModule(
 	pool *pgxpool.Pool,
 	cache rediscache.Cache,
 	tokenService auth.ITokenService,
+	mq rabbitmq.RabbitMQService,
 ) *AuthModule {
 
 	userRepo := repository.NewUserRepository(store, pool, cache)
-	authService := v1service.NewAuthService(userRepo, tokenService, cache)
+	authService := v1service.NewAuthService(userRepo, tokenService, cache, mq)
 	authHandler := v1handler.NewAuthHandler(authService)
 	authRoutes := v1routes.NewAuthRoutes(authHandler)
 
@@ -37,7 +39,7 @@ func NewAuthModule(
 
 func (m *AuthModule) PublicRoutes() []routes.Route {
 	return []routes.Route{
-		m.authRoutes, // ✅ dùng lại
+		m.authRoutes,
 	}
 }
 

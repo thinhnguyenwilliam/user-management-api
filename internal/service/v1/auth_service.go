@@ -3,17 +3,19 @@ package v1service
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/google/uuid"
 	domain "github.com/thinhnguyenwilliam/user-management-api/internal/domain/user"
+	"github.com/thinhnguyenwilliam/user-management-api/internal/events"
 	v1dto "github.com/thinhnguyenwilliam/user-management-api/internal/models/dto/v1"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/repository"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/utils"
 	"github.com/thinhnguyenwilliam/user-management-api/pkg/auth"
+	"github.com/thinhnguyenwilliam/user-management-api/pkg/rabbitmq"
 	"github.com/thinhnguyenwilliam/user-management-api/pkg/rediscache"
 )
 
@@ -21,17 +23,20 @@ type authService struct {
 	userRepo     repository.IUserRepository
 	tokenService auth.ITokenService
 	cache        rediscache.Cache
+	mq           rabbitmq.RabbitMQService
 }
 
 func NewAuthService(
 	userRepo repository.IUserRepository,
 	tokenService auth.ITokenService,
 	cache rediscache.Cache,
+	mq rabbitmq.RabbitMQService,
 ) IAuthService {
 	return &authService{
 		userRepo:     userRepo,
 		tokenService: tokenService,
 		cache:        cache,
+		mq:           mq,
 	}
 }
 
@@ -62,9 +67,29 @@ func (s *authService) ForgotPassword(ctx context.Context, email string, ip strin
 		return err
 	}
 
-	resetLink := fmt.Sprintf("http://yourdomain.com/reset-password?token=%s", token)
+	// 🔥 link reset
+	resetLink := fmt.Sprintf("http://localhost:3000/reset-password?token=%s", token)
 
-	log.Println("Reset link:", resetLink)
+	msg := events.EmailMessage{
+		Type:    "reset_password",
+		To:      email,
+		Subject: "Password Reset Request",
+		Body: fmt.Sprintf(
+			"Hi %s,\n\nReset link:\n%s\n\nExpires in 15 minutes",
+			user.UserEmail,
+			resetLink,
+		),
+	}
+
+	body, err := json.Marshal(msg)
+	if err != nil {
+		return err
+	}
+
+	if err := s.mq.Publish(ctx, "send_email", body); err != nil {
+		// log thôi, không fail request
+		fmt.Println("publish email failed:", err)
+	}
 
 	return nil
 }

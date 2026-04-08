@@ -16,12 +16,18 @@ func NewAuthRoutes(authHandler *v1handler.AuthHandler) *AuthRoutes {
 	}
 }
 
-func (r *AuthRoutes) Register(rg *gin.RouterGroup) {
+func (r *AuthRoutes) RegisterProtected(rg *gin.RouterGroup) {
+	authGroup := rg.Group("/auth")
+	{
+		authGroup.POST("/logout", r.authHandler.Logout)
+	}
+}
+
+func (r *AuthRoutes) RegisterPublic(rg *gin.RouterGroup) {
 	authGroup := rg.Group("/auth")
 	{
 		authGroup.POST("/login", r.authHandler.Login)
 		authGroup.POST("/refresh-token", r.authHandler.RefreshToken)
-		authGroup.POST("/logout", r.authHandler.Logout)
 		authGroup.POST("/forgot-password", r.authHandler.ForgotPassword)
 		authGroup.POST("/reset-password", r.authHandler.ResetPassword)
 	}

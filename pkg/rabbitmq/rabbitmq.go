@@ -17,18 +17,27 @@ type rabbitMQService struct {
 func NewRabbitMQService(amqpURL string, logger *zerolog.Logger) (RabbitMQService, error) {
 	conn, err := amqp091.Dial(amqpURL)
 	if err != nil {
-		logger.Error().Err(err).Msg("failed to connect to rabbitmq")
+		if logger != nil {
+			logger.Error().Err(err).Msg("failed to connect to rabbitmq")
+		}
 		return nil, err
 	}
 
 	ch, err := conn.Channel()
 	if err != nil {
 		conn.Close()
-		logger.Error().Err(err).Msg("failed to open channel")
+		if logger != nil {
+			logger.Error().Err(err).Msg("failed to open channel")
+		}
 		return nil, err
 	}
 
-	logger.Info().Msg("rabbitmq connected")
+	ch.Qos(10, 0, false)
+
+	if logger != nil {
+		logger.Info().Msg("rabbitmq connected")
+	}
+
 	return &rabbitMQService{
 		conn:    conn,
 		channel: ch,
@@ -38,16 +47,23 @@ func NewRabbitMQService(amqpURL string, logger *zerolog.Logger) (RabbitMQService
 
 func (r *rabbitMQService) Close() error {
 	if err := r.channel.Close(); err != nil {
-		r.logger.Error().Err(err).Msg("failed to close channel")
+		if r.logger != nil {
+			r.logger.Error().Err(err).Msg("failed to close channel")
+		}
 		return err
 	}
 
 	if err := r.conn.Close(); err != nil {
-		r.logger.Error().Err(err).Msg("failed to close connection")
+		if r.logger != nil {
+			r.logger.Error().Err(err).Msg("failed to close connection")
+		}
 		return err
 	}
 
-	r.logger.Info().Msg("rabbitmq connection closed")
+	if r.logger != nil {
+		r.logger.Info().Msg("rabbitmq connection closed")
+	}
+
 	return nil
 }
 
@@ -114,12 +130,33 @@ func (r *rabbitMQService) Consume(
 	}
 
 	go func() {
-		for msg := range msgs {
-			if err := handler(msg.Body); err != nil {
-				msg.Nack(false, true)
-				continue
+		for {
+			select {
+			case <-ctx.Done():
+				if r.logger != nil {
+					r.logger.Info().Msg("consumer stopped")
+				}
+				return
+
+			case msg, ok := <-msgs:
+				if !ok {
+					if r.logger != nil {
+						r.logger.Warn().Msg("message channel closed")
+					}
+					return
+				}
+
+				if r.logger != nil {
+					r.logger.Info().Msg("message received")
+				}
+
+				if err := handler(msg.Body); err != nil {
+					msg.Nack(false, true)
+					continue
+				}
+
+				msg.Ack(false)
 			}
-			msg.Ack(false)
 		}
 	}()
 

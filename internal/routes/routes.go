@@ -10,13 +10,14 @@ import (
 )
 
 type Route interface {
-	Register(rg *gin.RouterGroup)
+	RegisterPublic(rg *gin.RouterGroup)
+	RegisterProtected(rg *gin.RouterGroup)
 }
 
 func RegisterRoutes(
 	r *gin.Engine,
 	middlewares []gin.HandlerFunc,
-	tokenService auth.ITokenService, // 👈 thêm dòng này
+	tokenService auth.ITokenService,
 	publicRoutes []Route,
 	protectedRoutes []Route,
 	cache rediscache.Cache,
@@ -26,7 +27,7 @@ func RegisterRoutes(
 	// public group
 	public := api.Group("")
 	for _, route := range publicRoutes {
-		route.Register(public)
+		route.RegisterPublic(public)
 	}
 
 	// protected group
@@ -36,7 +37,7 @@ func RegisterRoutes(
 	}
 	protected.Use(middleware.AuthMiddleware(tokenService, cache))
 	for _, route := range protectedRoutes {
-		route.Register(protected)
+		route.RegisterProtected(protected)
 	}
 
 	r.NoRoute(func(c *gin.Context) {

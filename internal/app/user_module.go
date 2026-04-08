@@ -30,11 +30,13 @@ func NewUserModule(store *db.Queries, pool *pgxpool.Pool, cache rediscache.Cache
 }
 
 func (m *UserModule) PublicRoutes() []routes.Route {
-	return nil
+	return []routes.Route{
+		m.userRoutes,
+	}
 }
 
 func (m *UserModule) ProtectedRoutes() []routes.Route {
 	return []routes.Route{
-		m.userRoutes, // ✅ dùng lại, không tạo mới
+		m.userRoutes,
 	}
 }

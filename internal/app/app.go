@@ -11,7 +11,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/rabbitmq/amqp091-go"
 
 	"github.com/thinhnguyenwilliam/user-management-api/internal/cache"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/config"
@@ -20,6 +19,8 @@ import (
 	"github.com/thinhnguyenwilliam/user-management-api/internal/routes"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/validation"
 	"github.com/thinhnguyenwilliam/user-management-api/pkg/auth"
+	"github.com/thinhnguyenwilliam/user-management-api/pkg/logger"
+	"github.com/thinhnguyenwilliam/user-management-api/pkg/rabbitmq"
 	"github.com/thinhnguyenwilliam/user-management-api/pkg/ratelimiter"
 	"github.com/thinhnguyenwilliam/user-management-api/pkg/rediscache"
 )
@@ -30,17 +31,35 @@ type Module interface {
 }
 
 type Application struct {
-	config     *config.Config
-	router     *gin.Engine
-	modules    []Module
-	rabbitConn *amqp091.Connection
-	dbPool     *pgxpool.Pool
+	config  *config.Config
+	router  *gin.Engine
+	modules []Module
+	dbPool  *pgxpool.Pool
 }
 
 func NewApplication(cfg *config.Config, pool *pgxpool.Pool) (*Application, error) {
 	validateConfig(cfg)
 
 	if err := validation.InitValidation(); err != nil {
+		return nil, err
+	}
+
+	// init logger
+	logger.InitLogger(logger.LoggerConfig{
+		Level:      "info",
+		Filename:   "app.log",
+		MaxSize:    10,
+		MaxBackups: 5,
+		MaxAge:     30,
+		Compress:   true,
+		IsDev:      "development",
+	})
+
+	appLogger := logger.Log
+
+	// rabbitmq
+	mq, err := rabbitmq.NewRabbitMQService(cfg.RabbitMQ.URL, appLogger)
+	if err != nil {
 		return nil, err
 	}
 
@@ -54,12 +73,6 @@ func NewApplication(cfg *config.Config, pool *pgxpool.Pool) (*Application, error
 		[]byte("12345678901234567890123456789012"),
 		cacheService,
 	)
-
-	// RabbitMQ
-	conn, err := amqp091.Dial(cfg.RabbitMQ.URL)
-	if err != nil {
-		return nil, err
-	}
 
 	// Gin
 	gin.SetMode(gin.ReleaseMode)
@@ -82,7 +95,7 @@ func NewApplication(cfg *config.Config, pool *pgxpool.Pool) (*Application, error
 	// ✅ modules
 	modules := []Module{
 		NewUserModule(store, pool, cacheService),
-		NewAuthModule(store, pool, cacheService, tokenService),
+		NewAuthModule(store, pool, cacheService, tokenService, mq),
 	}
 
 	// ✅ collect routes đúng cách
@@ -105,11 +118,10 @@ func NewApplication(cfg *config.Config, pool *pgxpool.Pool) (*Application, error
 	)
 
 	return &Application{
-		config:     cfg,
-		router:     r,
-		modules:    modules,
-		rabbitConn: conn,
-		dbPool:     pool,
+		config:  cfg,
+		router:  r,
+		modules: modules,
+		dbPool:  pool,
 	}, nil
 }
 
@@ -155,11 +167,4 @@ func (a *Application) Run() error {
 	defer cancel()
 
 	return server.Shutdown(ctx)
-}
-
-func (a *Application) Shutdown() {
-	if a.rabbitConn != nil {
-		_ = a.rabbitConn.Close()
-	}
-	log.Println("Application shutdown complete")
 }
