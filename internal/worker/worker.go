@@ -3,6 +3,7 @@ package worker
 import (
 	"context"
 	"encoding/json"
+	"log"
 
 	"github.com/thinhnguyenwilliam/user-management-api/internal/config"
 	"github.com/thinhnguyenwilliam/user-management-api/internal/events"
@@ -40,15 +41,16 @@ func NewWorker(cfg *config.Config) (*Worker, error) {
 	}, nil
 }
 
-func (w *Worker) Start() error {
-	ctx := context.Background()
+func (w *Worker) Start(ctx context.Context) error {
+	log.Println("Worker started...")
 
 	return w.mq.Consume(ctx, "send_email", func(body []byte) error {
 		var msg events.EmailMessage
+
 		if err := json.Unmarshal(body, &msg); err != nil {
 			return err
 		}
 
-		return w.handleEmail(ctx, msg)
+		return w.handleMessage(ctx, msg)
 	})
 }
